@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GreenCitizen · Trigger Worklist</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  :root{
+    --paper:#F7F6F2; --card:#ffffff; --ink:#1A1A18; --muted:#6B6A64;
+    --line:#E4E2DA; --line-soft:#EEEDE7;
+    --gc:#1D9E75; --gc-deep:#0F6E56; --gc-ink:#085041;
+    --s3-bg:#E1F5EE; --s3-tx:#085041;
+    --s2-bg:#FAEEDA; --s2-tx:#633806;
+    --s1-bg:#F1EFE8; --s1-tx:#5F5E5A;
+    --link:#185FA5;
+  }
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;
+    background:var(--paper);color:var(--ink);line-height:1.5;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:980px;margin:0 auto;padding:28px 22px 80px}
+
+  .top{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap;
+    padding-bottom:18px;border-bottom:1px solid var(--line)}
+  .brand{display:flex;align-items:center;gap:11px}
+  .mark{width:34px;height:34px;border-radius:9px;background:var(--gc);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+  .mark svg{width:19px;height:19px}
+  .brand h1{font-size:16px;font-weight:600;letter-spacing:-.01em}
+  .brand p{font-size:11.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.09em;margin-top:1px}
+  .runmeta{font-size:12.5px;color:var(--muted);text-align:right}
+  .runmeta b{color:var(--ink);font-weight:600}
+  .mode{display:inline-block;margin-top:4px;font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;
+    padding:2px 8px;border-radius:20px;background:var(--s2-bg);color:var(--s2-tx)}
+  .mode.live{background:var(--s3-bg);color:var(--s3-tx)}
+
+  .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:20px 0 8px}
+  .stat{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:13px 15px}
+  .stat .n{font-size:23px;font-weight:600;letter-spacing:-.02em}
+  .stat .n.g{color:var(--gc-ink)} .stat .n.a{color:var(--s2-tx)}
+  .stat .l{font-size:11.5px;color:var(--muted);margin-top:2px}
+
+  .filters{display:flex;align-items:center;gap:7px;flex-wrap:wrap;margin:18px 0 6px}
+  .chip{font-size:12px;padding:5px 13px;border-radius:20px;border:1px solid var(--line);
+    background:var(--card);color:var(--muted);cursor:pointer;font-family:inherit;transition:.12s}
+  .chip:hover{border-color:var(--muted);color:var(--ink)}
+  .chip.on{background:var(--gc);border-color:var(--gc);color:#fff}
+  .spacer{flex:1}
+  .toggle{font-size:12px;color:var(--muted);display:flex;align-items:center;gap:6px;cursor:pointer;user-select:none}
+
+  .group{margin-top:26px}
+  .ghead{display:flex;align-items:center;gap:10px;margin-bottom:11px}
+  .ghead .dot{width:8px;height:8px;border-radius:50%}
+  .ghead.g3 .dot{background:var(--gc)} .ghead.g2 .dot{background:#EF9F27} .ghead.g1 .dot{background:#B4B2A9}
+  .ghead h2{font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.1em;color:var(--ink)}
+  .ghead .sub{font-size:12px;color:var(--muted)}
+  .gcount{font-size:11.5px;color:var(--muted);background:var(--line-soft);padding:1px 8px;border-radius:20px}
+
+  .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px 18px;margin-bottom:10px;transition:.12s}
+  .card:hover{border-color:#D4D2C8}
+  .card.handled{opacity:.55}
+  .crow{display:flex;align-items:flex-start;justify-content:space-between;gap:14px}
+  .company{font-size:15.5px;font-weight:600;letter-spacing:-.01em}
+  .trigger{font-size:13px;color:var(--muted);margin-top:3px;line-height:1.45}
+  .score{flex-shrink:0;width:34px;height:34px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:600}
+  .score.s3{background:var(--s3-bg);color:var(--s3-tx)} .score.s2{background:var(--s2-bg);color:var(--s2-tx)} .score.s1{background:var(--s1-bg);color:var(--s1-tx)}
+
+  .meta{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:11px 0 0}
+  .pill{font-size:11px;font-weight:600;padding:3px 9px;border-radius:8px}
+  .p-layoff{background:#FCEBEB;color:#791F1F} .p-fund{background:#EEEDFE;color:#3C3489}
+  .p-job{background:#EAF3DE;color:#27500A} .p-move{background:#E6F1FB;color:#0C447C} .p-rfp{background:#FAEEDA;color:#633806}
+  .metatext{font-size:12px;color:var(--muted)}
+  .metatext b{color:var(--ink);font-weight:500}
+  .agetag{font-size:11px;color:var(--muted);background:var(--line-soft);padding:2px 9px;border-radius:20px;margin-left:auto}
+
+  .opener{margin:13px 0 0;padding:12px 14px;background:var(--paper);border:1px solid var(--line-soft);
+    border-radius:9px;font-size:13px;line-height:1.55;color:#39382F;font-style:italic}
+
+  .actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:12px}
+  .verify{font-size:12.5px;color:var(--link);text-decoration:none;font-weight:500;display:inline-flex;align-items:center;gap:4px}
+  .verify:hover{text-decoration:underline}
+  .verify svg{width:12px;height:12px}
+  .btn{font-size:12.5px;font-weight:600;padding:7px 15px;border-radius:8px;border:none;cursor:pointer;font-family:inherit;transition:.12s}
+  .btn-copy{background:var(--gc);color:#fff} .btn-copy:hover{background:var(--gc-deep)}
+  .sel{font-size:12.5px;border:1px solid var(--line);border-radius:8px;padding:6px 9px;background:var(--card);
+    color:var(--ink);cursor:pointer;font-family:inherit;margin-left:auto}
+  .why{font-size:12px;color:var(--muted);background:none;border:none;cursor:pointer;font-family:inherit;padding:4px 0;margin-top:9px;display:inline-flex;align-items:center;gap:5px}
+  .why:hover{color:var(--ink)}
+  .rationale{display:none;margin-top:8px;font-size:12.5px;color:var(--muted);line-height:1.5;
+    padding:10px 13px;border-left:2px solid var(--gc);background:var(--paper);border-radius:0 8px 8px 0}
+  .rationale.open{display:block}
+
+  .empty{padding:40px;text-align:center;color:var(--muted);font-size:13.5px;
+    background:var(--card);border:1px dashed var(--line);border-radius:14px}
+  .banner{font-size:12.5px;color:var(--s2-tx);background:var(--s2-bg);border:1px solid #F0D9A8;
+    border-radius:10px;padding:10px 14px;margin:16px 0 0;line-height:1.5}
+
+  @media(max-width:640px){ .stats{grid-template-columns:repeat(2,1fr)} .sel{margin-left:0} }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="top">
+    <div class="brand">
+      <div class="mark"><svg viewBox="0 0 16 16"><circle cx="8" cy="8" r="5" fill="none" stroke="#fff" stroke-width="2"/><circle cx="8" cy="8" r="2" fill="#fff"/></svg></div>
+      <div>
+        <h1>Trigger worklist</h1>
+        <p>Bay Area recycling leads</p>
+      </div>
+    </div>
+    <div class="runmeta">
+      Last refreshed <b id="run">—</b><br>
+      <span class="mode" id="mode">demo data</span>
+    </div>
+  </div>
+
+  <div class="stats">
+    <div class="stat"><div class="n" id="c-all">0</div><div class="l">Leads · last 7 days</div></div>
+    <div class="stat"><div class="n g" id="c-3">0</div><div class="l">Act today</div></div>
+    <div class="stat"><div class="n a" id="c-2">0</div><div class="l">This week</div></div>
+    <div class="stat"><div class="n" id="c-done">0</div><div class="l">Handled</div></div>
+  </div>
+
+  <div id="config-banner"></div>
+
+  <div class="filters">
+    <button class="chip on" data-f="all">All</button>
+    <button class="chip" data-f="layoff">Layoffs</button>
+    <button class="chip" data-f="fund">Funding</button>
+    <button class="chip" data-f="job">IT hiring</button>
+    <button class="chip" data-f="move">Moves</button>
+    <button class="chip" data-f="rfp">RFPs</button>
+    <span class="spacer"></span>
+    <label class="toggle"><input type="checkbox" id="hide-handled"> Hide handled</label>
+  </div>
+
+  <div id="list"></div>
+
+</div>
+
+<script>
+/* ============================================================
+   PASTE YOUR TWO VALUES HERE (between the quotes), then save.
+   Until you do, the page runs on built-in sample data.
+   ============================================================ */
+const SUPABASE_URL = "https://ydexaoiabbtjuuonzvjc.supabase.co";
+const SUPABASE_KEY = "sb_publishable_iEkHDF3Adt494FspnGAQ9g_15PQ9Kxr";
+
+const DAYS_BACK = 7;   /* how many days of leads to show */
+
+const STATUSES = ["New","Contacted","Not relevant","Hold","Monitor"];
+
+const SAMPLE = [
+  {id:1,run_date:"2026-06-24",company:"Keywords International Limited Group",trigger_text:"128-person permanent layoff in San Francisco, effective Aug 22 2026",trigger_type:"layoff",score:3,location:"San Francisco",contact_title:"IT Manager",source:"CA WARN, 2026-06-22",source_url:"https://edd.ca.gov/en/jobs_and_training/Layoff_Services_WARN/",opener:"Saw Keywords' San Francisco workforce reduction filing — a change that size usually leaves a wave of laptops and monitors behind, and we can take those off your team's hands with free pickup and certified data erasure.",rationale:"Core service area, 128 staff, downtown office — near-certain equipment volume; contact this week.",status:"New"},
+  {id:2,run_date:"2026-06-23",company:"Walmart (Sunnyvale tech site)",trigger_text:"67-person layoff at 1345 Crossman Ave, Sunnyvale, effective Aug 21 2026",trigger_type:"layoff",score:2,location:"Sunnyvale",contact_title:"IT Asset Manager",source:"CA WARN, 2026-06-19",source_url:"https://edd.ca.gov/en/jobs_and_training/Layoff_Services_WARN/",opener:"Noticed the workforce changes at the Sunnyvale Crossman Ave site — if IT equipment is coming off desks, we offer free Bay Area pickup with documented data destruction.",rationale:"Verify office vs store first; large firms often already have a disposal contract — scored 2 rather than 3.",status:"New"},
+  {id:3,run_date:"2026-06-24",company:"Northgate Logistics",trigger_text:"Series B raise reported, scaling Oakland operations team",trigger_type:"fund",score:2,location:"Oakland",contact_title:"Operations Manager",source:"SEC Form D, 2026-06-23",source_url:"https://www.sec.gov/cgi-bin/browse-edgar",opener:"Congrats on the new round — fast-scaling teams tend to cycle through equipment as they upgrade, and we handle responsible Bay Area pickup at no cost when older gear piles up.",rationale:"Funding signals a likely future need, not an immediate one — warm outreach, not urgent.",status:"New"},
+  {id:4,run_date:"2026-06-22",company:"Bayview Unified School District",trigger_text:"RFP posted for classroom device refresh and disposal",trigger_type:"rfp",score:2,location:"San Jose",contact_title:"Procurement Director",source:"Cal eProcure, 2026-06-23",source_url:"https://caleprocure.ca.gov/pages/public-search.aspx",opener:"Noticed the device-refresh RFP — public agencies have strict e-waste compliance requirements, and we're an R2-certified recycler that makes documented disposal simple.",rationale:"Public institutions must dispose of old equipment compliantly; clear fit, near-term timing.",status:"New"},
+  {id:5,run_date:"2026-06-24",company:"Bay Area tech sector (broad)",trigger_text:"Relocation activity trending up across the metro — category signal only",trigger_type:"move",score:1,location:"Bay Area-wide",contact_title:"Monitor only",source:"CRE market report, 2026-06",source_url:"https://news.theregistrysf.com/",opener:null,rationale:"Not a specific company — watch the CRE feeds for named movers and promote those into real leads.",status:"Monitor"}
+];
+
+let LEADS = [];
+let activeFilter = "all";
+let hideHandled = false;
+let client = null;
+const live = !SUPABASE_URL.includes("PASTE") && !SUPABASE_KEY.includes("PASTE");
+
+const $ = s => document.querySelector(s);
+const esc = s => (s==null?"":String(s)).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+
+function daysAgoStr(n){ const d=new Date(); d.setDate(d.getDate()-n); return d.toISOString().slice(0,10); }
+function dayLabel(run_date){
+  if(!run_date) return "";
+  const today=new Date(); today.setHours(0,0,0,0);
+  const d=new Date(run_date+"T00:00:00");
+  const diff=Math.round((today-d)/86400000);
+  if(diff<=0) return "";          /* today: no tag, keeps it clean */
+  if(diff===1) return "Yesterday";
+  return diff+" days ago";
+}
+
+async function boot(){
+  if(live){
+    try{
+      client = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+      let { data, error } = await client.from('leads').select('*')
+        .gte('run_date', daysAgoStr(DAYS_BACK))
+        .order('run_date',{ascending:false}).order('score',{ascending:false});
+      if(error) throw error;
+      LEADS = data || [];
+      $('#mode').textContent = "live";
+      $('#mode').classList.add("live");
+    }catch(e){
+      LEADS = SAMPLE;
+      $('#config-banner').innerHTML =
+        '<div class="banner">Couldn\u2019t reach your database, so this is showing sample data. '+
+        'Check that the Project URL and publishable key at the top of the file are correct.</div>';
+    }
+  } else {
+    LEADS = SAMPLE;
+    $('#config-banner').innerHTML =
+      '<div class="banner">Running on sample data. Paste your Project URL and publishable key '+
+      'into the top of this file (between the quotes) and refresh to go live.</div>';
+  }
+  $('#run').textContent = new Date().toLocaleString('en-US',{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'});
+  render();
+}
+
+function visible(){
+  return LEADS.filter(l=>{
+    if(hideHandled && l.status!=="New" && l.status!=="Monitor") return false;
+    if(activeFilter==="all") return true;
+    return l.trigger_type===activeFilter;
+  });
+}
+
+function render(){
+  const v = visible();
+  $('#c-all').textContent  = LEADS.filter(l=>l.status!=="Monitor").length;
+  $('#c-3').textContent    = LEADS.filter(l=>l.score===3).length;
+  $('#c-2').textContent    = LEADS.filter(l=>l.score===2).length;
+  $('#c-done').textContent = LEADS.filter(l=>l.status==="Contacted"||l.status==="Not relevant"||l.status==="Hold").length;
+
+  const list = $('#list'); list.innerHTML = "";
+  const groups = [
+    {s:3,cls:"g3",label:"Act today",sub:"contact the same day"},
+    {s:2,cls:"g2",label:"This week",sub:"batch for warm outreach"},
+    {s:1,cls:"g1",label:"Monitor",sub:"category signals, low priority"}
+  ];
+  let any=false;
+  groups.forEach(g=>{
+    const rows = v.filter(l=>l.score===g.s)
+      .sort((a,b)=>(b.run_date||"").localeCompare(a.run_date||""));
+    if(!rows.length) return;
+    any=true;
+    const sec = document.createElement('div'); sec.className="group";
+    sec.innerHTML = `<div class="ghead ${g.cls}"><span class="dot"></span>
+      <h2>${g.label}</h2><span class="sub">— ${g.sub}</span>
+      <span class="gcount">${rows.length}</span></div>`;
+    rows.forEach(l=>sec.appendChild(cardEl(l)));
+    list.appendChild(sec);
+  });
+  if(!any) list.innerHTML = '<div class="empty">Nothing matches this filter.</div>';
+}
+
+function cardEl(l){
+  const c = document.createElement('div');
+  c.className = "card" + (["Contacted","Not relevant","Hold"].includes(l.status)?" handled":"");
+  const pill = {layoff:"p-layoff",fund:"p-fund",job:"p-job",move:"p-move",rfp:"p-rfp"}[l.trigger_type]||"p-move";
+  const plabel = {layoff:"Layoff",fund:"Funding",job:"IT hiring",move:"Office move",rfp:"RFP"}[l.trigger_type]||l.trigger_type;
+  const age = dayLabel(l.run_date);
+  const opener = l.opener ? `<div class="opener">${esc(l.opener)}</div>` : "";
+  const actions = l.opener ? `
+    <div class="actions">
+      ${l.source_url?`<a class="verify" href="${esc(l.source_url)}" target="_blank" rel="noopener">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><path d="M15 3h6v6"/><path d="M10 14L21 3"/></svg>
+        Verify source</a>`:""}
+      <button class="btn btn-copy" onclick='copyOpener(${l.id})'>Copy opener</button>
+      <select class="sel" onchange='setStatus(${l.id}, this.value)'>
+        ${STATUSES.map(s=>`<option ${l.status===s?"selected":""}>${s}</option>`).join("")}
+      </select>
+    </div>` : `
+    <div class="actions">
+      ${l.source_url?`<a class="verify" href="${esc(l.source_url)}" target="_blank" rel="noopener">Watch source</a>`:""}
+    </div>`;
+  c.innerHTML = `
+    <div class="crow">
+      <div>
+        <div class="company">${esc(l.company)}</div>
+        <div class="trigger">${esc(l.trigger_text)}</div>
+      </div>
+      <div class="score s${l.score}">${l.score}</div>
+    </div>
+    <div class="meta">
+      <span class="pill ${pill}">${plabel}</span>
+      <span class="metatext">${esc(l.location||"")}</span>
+      ${l.contact_title&&l.contact_title!=="Monitor only"?`<span class="metatext">· reach the <b>${esc(l.contact_title)}</b></span>`:""}
+      ${age?`<span class="agetag">${age}</span>`:""}
+    </div>
+    ${opener}
+    ${actions}
+    ${l.rationale?`<button class="why" onclick='toggleWhy(this)'>Why score ${l.score}? ›</button>
+      <div class="rationale">${esc(l.rationale)}</div>`:""}
+  `;
+  return c;
+}
+
+function copyOpener(id){
+  const l = LEADS.find(x=>x.id===id); if(!l||!l.opener) return;
+  navigator.clipboard.writeText(l.opener).then(()=>{
+    event.target.textContent="Copied";
+    setTimeout(()=>event.target.textContent="Copy opener",1600);
+  });
+}
+async function setStatus(id, status){
+  const l = LEADS.find(x=>x.id===id); if(!l) return;
+  l.status = status;
+  if(live && client){
+    try{ await client.from('leads').update({status, updated_at:new Date().toISOString()}).eq('id', id); }
+    catch(e){ /* stays updated on screen even if the save fails */ }
+  }
+  render();
+}
+function toggleWhy(btn){ btn.nextElementSibling.classList.toggle('open'); }
+
+document.querySelectorAll('.chip').forEach(ch=>ch.addEventListener('click',()=>{
+  document.querySelectorAll('.chip').forEach(c=>c.classList.remove('on'));
+  ch.classList.add('on'); activeFilter=ch.dataset.f; render();
+}));
+$('#hide-handled').addEventListener('change',e=>{ hideHandled=e.target.checked; render(); });
+
+boot();
+</script>
+</body>
+</html>

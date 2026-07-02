@@ -39,15 +39,30 @@
   .stat .n.g{color:var(--gc-ink)} .stat .n.a{color:var(--s2-tx)}
   .stat .l{font-size:11.5px;color:var(--muted);margin-top:2px}
 
-  .filters{display:flex;align-items:center;gap:7px;flex-wrap:wrap;margin:18px 0 6px}
+  /* tabs */
+  .tabs{display:flex;gap:2px;border-bottom:1px solid var(--line);margin-top:20px}
+  .tab{padding:10px 16px;font-size:13px;font-weight:600;color:var(--muted);cursor:pointer;
+    border:none;background:none;border-bottom:2px solid transparent;margin-bottom:-1px;font-family:inherit;transition:.12s}
+  .tab:hover{color:var(--ink)}
+  .tab.on{color:var(--gc-ink);border-bottom-color:var(--gc)}
+
+  .controls{display:flex;align-items:center;gap:7px;flex-wrap:wrap;margin:16px 0 6px}
   .chip{font-size:12px;padding:5px 13px;border-radius:20px;border:1px solid var(--line);
     background:var(--card);color:var(--muted);cursor:pointer;font-family:inherit;transition:.12s}
   .chip:hover{border-color:var(--muted);color:var(--ink)}
   .chip.on{background:var(--gc);border-color:var(--gc);color:#fff}
   .spacer{flex:1}
   .toggle{font-size:12px;color:var(--muted);display:flex;align-items:center;gap:6px;cursor:pointer;user-select:none}
+  .search{flex:1;min-width:200px;padding:8px 13px;border:1px solid var(--line);border-radius:9px;
+    font-family:inherit;font-size:13px;color:var(--ink);background:var(--card)}
+  .sel-filter{font-size:12.5px;border:1px solid var(--line);border-radius:9px;padding:7px 10px;
+    background:var(--card);color:var(--ink);cursor:pointer;font-family:inherit}
+  .count{font-size:12px;color:var(--muted);margin:10px 2px}
+  .loadmore{display:block;margin:18px auto 0;padding:9px 22px;font-size:12.5px;font-weight:600;
+    border:1px solid var(--line);border-radius:9px;background:var(--card);color:var(--gc-ink);cursor:pointer;font-family:inherit}
+  .loadmore:hover{border-color:var(--gc)}
 
-  .group{margin-top:26px}
+  .group{margin-top:22px}
   .ghead{display:flex;align-items:center;gap:10px;margin-bottom:11px}
   .ghead .dot{width:8px;height:8px;border-radius:50%}
   .ghead.g3 .dot{background:var(--gc)} .ghead.g2 .dot{background:#EF9F27} .ghead.g1 .dot{background:#B4B2A9}
@@ -71,10 +86,12 @@
   .metatext{font-size:12px;color:var(--muted)}
   .metatext b{color:var(--ink);font-weight:500}
   .agetag{font-size:11px;color:var(--muted);background:var(--line-soft);padding:2px 9px;border-radius:20px;margin-left:auto}
+  .statustag{font-size:10.5px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;padding:2px 8px;border-radius:20px}
+  .st-Contacted{background:var(--s3-bg);color:var(--s3-tx)} .st-Hold{background:var(--s2-bg);color:var(--s2-tx)}
+  .st-Notrelevant{background:var(--s1-bg);color:var(--s1-tx)}
 
   .opener{margin:13px 0 0;padding:12px 14px;background:var(--paper);border:1px solid var(--line-soft);
     border-radius:9px;font-size:13px;line-height:1.55;color:#39382F;font-style:italic}
-
   .actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:12px}
   .verify{font-size:12.5px;color:var(--link);text-decoration:none;font-weight:500;display:inline-flex;align-items:center;gap:4px}
   .verify:hover{text-decoration:underline}
@@ -93,7 +110,6 @@
     background:var(--card);border:1px dashed var(--line);border-radius:14px}
   .banner{font-size:12.5px;color:var(--s2-tx);background:var(--s2-bg);border:1px solid #F0D9A8;
     border-radius:10px;padding:10px 14px;margin:16px 0 0;line-height:1.5}
-
   @media(max-width:640px){ .stats{grid-template-columns:repeat(2,1fr)} .sel{margin-left:0} }
 </style>
 </head>
@@ -103,211 +119,253 @@
   <div class="top">
     <div class="brand">
       <div class="mark"><svg viewBox="0 0 16 16"><circle cx="8" cy="8" r="5" fill="none" stroke="#fff" stroke-width="2"/><circle cx="8" cy="8" r="2" fill="#fff"/></svg></div>
-      <div>
-        <h1>Trigger worklist</h1>
-        <p>Bay Area recycling leads</p>
-      </div>
+      <div><h1>Trigger worklist</h1><p>Bay Area recycling leads</p></div>
     </div>
-    <div class="runmeta">
-      Last refreshed <b id="run">—</b><br>
-      <span class="mode" id="mode">demo data</span>
-    </div>
+    <div class="runmeta">Last refreshed <b id="run">—</b><br><span class="mode" id="mode">demo data</span></div>
   </div>
 
   <div class="stats">
     <div class="stat"><div class="n" id="c-all">0</div><div class="l">Leads · last 7 days</div></div>
     <div class="stat"><div class="n g" id="c-3">0</div><div class="l">Act today</div></div>
     <div class="stat"><div class="n a" id="c-2">0</div><div class="l">This week</div></div>
-    <div class="stat"><div class="n" id="c-done">0</div><div class="l">Handled</div></div>
+    <div class="stat"><div class="n" id="c-done">0</div><div class="l">Handled (7d)</div></div>
   </div>
 
   <div id="config-banner"></div>
 
-  <div class="filters">
-    <button class="chip on" data-f="all">All</button>
-    <button class="chip" data-f="layoff">Layoffs</button>
-    <button class="chip" data-f="fund">Funding</button>
-    <button class="chip" data-f="job">IT hiring</button>
-    <button class="chip" data-f="move">Moves</button>
-    <button class="chip" data-f="rfp">RFPs</button>
-    <span class="spacer"></span>
-    <label class="toggle"><input type="checkbox" id="hide-handled"> Hide handled</label>
+  <div class="tabs">
+    <button class="tab on" data-tab="today">Today's worklist</button>
+    <button class="tab" data-tab="week">Last 7 days</button>
+    <button class="tab" data-tab="all">All leads</button>
   </div>
 
+  <div id="controls"></div>
   <div id="list"></div>
+  <div id="pager"></div>
 
 </div>
 
 <script>
 /* ============================================================
-   PASTE YOUR TWO VALUES HERE (between the quotes), then save.
-   Until you do, the page runs on built-in sample data.
+   PASTE YOUR TWO VALUES HERE (same ones as your current dashboard).
    ============================================================ */
 const SUPABASE_URL = "https://ydexaoiabbtjuuonzvjc.supabase.co";
 const SUPABASE_KEY = "sb_publishable_iEkHDF3Adt494FspnGAQ9g_15PQ9Kxr";
 
-const DAYS_BACK = 7;   /* how many days of leads to show */
-
+const RECENT_DAYS = 7;
+const PAGE = 50;               // archive page size
 const STATUSES = ["New","Contacted","Not relevant","Hold","Monitor"];
 
+const $ = s => document.querySelector(s);
+const esc = s => (s==null?"":String(s)).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const iso = d => d.toISOString().slice(0,10);
+function daysAgo(n){ const d=new Date(); d.setDate(d.getDate()-n); return iso(d); }
+function dayLabel(rd){
+  if(!rd) return "";
+  const t=new Date(); t.setHours(0,0,0,0);
+  const diff=Math.round((t-new Date(rd+"T00:00:00"))/86400000);
+  if(diff<=0) return ""; if(diff===1) return "Yesterday"; return diff+" days ago";
+}
+
+/* demo rows, dated relative to today so the tabs behave correctly */
 const SAMPLE = [
-  {id:1,run_date:"2026-06-24",company:"Keywords International Limited Group",trigger_text:"128-person permanent layoff in San Francisco, effective Aug 22 2026",trigger_type:"layoff",score:3,location:"San Francisco",contact_title:"IT Manager",source:"CA WARN, 2026-06-22",source_url:"https://edd.ca.gov/en/jobs_and_training/Layoff_Services_WARN/",opener:"Saw Keywords' San Francisco workforce reduction filing — a change that size usually leaves a wave of laptops and monitors behind, and we can take those off your team's hands with free pickup and certified data erasure.",rationale:"Core service area, 128 staff, downtown office — near-certain equipment volume; contact this week.",status:"New"},
-  {id:2,run_date:"2026-06-23",company:"Walmart (Sunnyvale tech site)",trigger_text:"67-person layoff at 1345 Crossman Ave, Sunnyvale, effective Aug 21 2026",trigger_type:"layoff",score:2,location:"Sunnyvale",contact_title:"IT Asset Manager",source:"CA WARN, 2026-06-19",source_url:"https://edd.ca.gov/en/jobs_and_training/Layoff_Services_WARN/",opener:"Noticed the workforce changes at the Sunnyvale Crossman Ave site — if IT equipment is coming off desks, we offer free Bay Area pickup with documented data destruction.",rationale:"Verify office vs store first; large firms often already have a disposal contract — scored 2 rather than 3.",status:"New"},
-  {id:3,run_date:"2026-06-24",company:"Northgate Logistics",trigger_text:"Series B raise reported, scaling Oakland operations team",trigger_type:"fund",score:2,location:"Oakland",contact_title:"Operations Manager",source:"SEC Form D, 2026-06-23",source_url:"https://www.sec.gov/cgi-bin/browse-edgar",opener:"Congrats on the new round — fast-scaling teams tend to cycle through equipment as they upgrade, and we handle responsible Bay Area pickup at no cost when older gear piles up.",rationale:"Funding signals a likely future need, not an immediate one — warm outreach, not urgent.",status:"New"},
-  {id:4,run_date:"2026-06-22",company:"Bayview Unified School District",trigger_text:"RFP posted for classroom device refresh and disposal",trigger_type:"rfp",score:2,location:"San Jose",contact_title:"Procurement Director",source:"Cal eProcure, 2026-06-23",source_url:"https://caleprocure.ca.gov/pages/public-search.aspx",opener:"Noticed the device-refresh RFP — public agencies have strict e-waste compliance requirements, and we're an R2-certified recycler that makes documented disposal simple.",rationale:"Public institutions must dispose of old equipment compliantly; clear fit, near-term timing.",status:"New"},
-  {id:5,run_date:"2026-06-24",company:"Bay Area tech sector (broad)",trigger_text:"Relocation activity trending up across the metro — category signal only",trigger_type:"move",score:1,location:"Bay Area-wide",contact_title:"Monitor only",source:"CRE market report, 2026-06",source_url:"https://news.theregistrysf.com/",opener:null,rationale:"Not a specific company — watch the CRE feeds for named movers and promote those into real leads.",status:"Monitor"}
+  {id:1,run_date:daysAgo(0),company:"Keywords International Limited Group",trigger_text:"128-person permanent layoff in San Francisco, effective Aug 22 2026",trigger_type:"layoff",score:3,location:"San Francisco",contact_title:"IT Manager",source:"CA WARN, 2026-06-22",source_url:"https://edd.ca.gov/en/jobs_and_training/Layoff_Services_WARN/",opener:"Saw Keywords' San Francisco workforce reduction filing \u2014 a change that size usually leaves a wave of laptops and monitors behind, and we can take those off your team's hands with free pickup and certified data erasure.",rationale:"Downtown SF office, large in-area layoff \u2014 near-certain equipment volume; contact this week.",status:"New"},
+  {id:2,run_date:daysAgo(1),company:"Northgate Logistics",trigger_text:"Series B raise reported, scaling Oakland operations team",trigger_type:"fund",score:2,location:"Oakland",contact_title:"Operations Manager",source:"SEC Form D, 2026-06-23",source_url:"https://www.sec.gov/cgi-bin/browse-edgar",opener:"Congrats on the new round \u2014 fast-scaling teams tend to cycle through equipment as they upgrade, and we handle responsible Bay Area pickup at no cost when older gear piles up.",rationale:"Funding signals a likely future need, not an immediate one \u2014 warm outreach.",status:"New"},
+  {id:3,run_date:daysAgo(3),company:"Bayview Unified School District",trigger_text:"RFP posted for classroom device refresh and disposal",trigger_type:"rfp",score:2,location:"San Jose",contact_title:"Procurement Director",source:"Cal eProcure, 2026-06-23",source_url:"https://caleprocure.ca.gov/pages/public-search.aspx",opener:"Noticed the device-refresh RFP \u2014 public agencies have strict e-waste compliance requirements, and we're an R2-certified recycler that makes documented disposal simple.",rationale:"Public institutions must dispose compliantly; clear fit, near-term timing.",status:"New"},
+  {id:4,run_date:daysAgo(3),company:"Walmart (Sunnyvale tech site)",trigger_text:"67-person layoff at 1345 Crossman Ave, Sunnyvale",trigger_type:"layoff",score:2,location:"Sunnyvale",contact_title:"IT Asset Manager",source:"CA WARN, 2026-06-19",source_url:"https://edd.ca.gov/en/jobs_and_training/Layoff_Services_WARN/",opener:"Noticed the workforce changes at the Sunnyvale Crossman Ave site \u2014 if IT equipment is coming off desks, we offer free Bay Area pickup with documented data destruction.",rationale:"Verify office vs store; large firm likely has an ITAD contract \u2014 scored 2.",status:"New"},
+  {id:5,run_date:daysAgo(1),company:"Bay Area tech sector (broad)",trigger_text:"Relocation activity trending up \u2014 category signal only",trigger_type:"move",score:1,location:"Bay Area-wide",contact_title:"Monitor only",source:"CRE report, 2026-06",source_url:"https://news.theregistrysf.com/",opener:null,rationale:"Not a specific company \u2014 watch for named movers.",status:"Monitor"},
+  {id:6,run_date:daysAgo(12),company:"Redwood Biotherapeutics",trigger_text:"$40M raise; expanding Redwood City lab and office",trigger_type:"fund",score:2,location:"Redwood City",contact_title:"Facilities Manager",source:"SEC Form D",source_url:"https://www.sec.gov/cgi-bin/browse-edgar",opener:"Congrats on the raise \u2014 lab and office expansions usually retire a batch of older gear; we handle free, certified Bay Area pickup.",rationale:"Operating company raise, clear local site.",status:"Contacted"},
+  {id:7,run_date:daysAgo(25),company:"Peninsula Freight Co.",trigger_text:"31-person layoff, San Carlos",trigger_type:"layoff",score:2,location:"San Carlos",contact_title:"IT Manager",source:"News (via Google News)",source_url:"https://news.google.com/",opener:"Saw the San Carlos workforce reduction \u2014 smaller teams still leave equipment behind, and our pickup is free with certified data destruction.",rationale:"Sub-50 layoff, net-new (below WARN threshold).",status:"Hold"},
+  {id:8,run_date:daysAgo(40),company:"Marin Design Studio",trigger_text:"Signed new lease, relocating within San Rafael",trigger_type:"move",score:3,location:"San Rafael",contact_title:"Operations Manager",source:"The Registry",source_url:"https://news.theregistrysf.com/",opener:"Saw the San Rafael move \u2014 office relocations almost always come with equipment that needs to go somewhere responsibly; we pick up free.",rationale:"Confirmed office move in-area \u2014 high intent.",status:"Not relevant"},
 ];
 
-let LEADS = [];
-let activeFilter = "all";
+let RECENT = [];               // last 7 days (drives Today + Week tabs)
+let activeTab = "today";
+let typeFilter = "all";
 let hideHandled = false;
 let client = null;
 const live = !SUPABASE_URL.includes("PASTE") && !SUPABASE_KEY.includes("PASTE");
 
-const $ = s => document.querySelector(s);
-const esc = s => (s==null?"":String(s)).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
-
-function daysAgoStr(n){ const d=new Date(); d.setDate(d.getDate()-n); return d.toISOString().slice(0,10); }
-function dayLabel(run_date){
-  if(!run_date) return "";
-  const today=new Date(); today.setHours(0,0,0,0);
-  const d=new Date(run_date+"T00:00:00");
-  const diff=Math.round((today-d)/86400000);
-  if(diff<=0) return "";          /* today: no tag, keeps it clean */
-  if(diff===1) return "Yesterday";
-  return diff+" days ago";
-}
+// archive state
+let archive = { rows:[], offset:0, done:false, search:"", status:"all", type:"all" };
 
 async function boot(){
   if(live){
     try{
       client = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-      let { data, error } = await client.from('leads').select('*')
-        .gte('run_date', daysAgoStr(DAYS_BACK))
+      const { data, error } = await client.from('leads').select('*')
+        .gte('run_date', daysAgo(RECENT_DAYS))
         .order('run_date',{ascending:false}).order('score',{ascending:false});
       if(error) throw error;
-      LEADS = data || [];
-      $('#mode').textContent = "live";
-      $('#mode').classList.add("live");
+      RECENT = data || [];
+      $('#mode').textContent="live"; $('#mode').classList.add("live");
     }catch(e){
-      LEADS = SAMPLE;
-      $('#config-banner').innerHTML =
-        '<div class="banner">Couldn\u2019t reach your database, so this is showing sample data. '+
-        'Check that the Project URL and publishable key at the top of the file are correct.</div>';
+      RECENT = SAMPLE.filter(l=>l.run_date >= daysAgo(RECENT_DAYS));
+      $('#config-banner').innerHTML='<div class="banner">Couldn\u2019t reach your database \u2014 showing sample data. Check the URL and key at the top of the file.</div>';
     }
   } else {
-    LEADS = SAMPLE;
-    $('#config-banner').innerHTML =
-      '<div class="banner">Running on sample data. Paste your Project URL and publishable key '+
-      'into the top of this file (between the quotes) and refresh to go live.</div>';
+    RECENT = SAMPLE.filter(l=>l.run_date >= daysAgo(RECENT_DAYS));
+    $('#config-banner').innerHTML='<div class="banner">Running on sample data. Paste your Project URL and publishable key into the top of this file and refresh to go live.</div>';
   }
   $('#run').textContent = new Date().toLocaleString('en-US',{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'});
+  renderStats();
   render();
 }
 
-function visible(){
-  return LEADS.filter(l=>{
-    if(hideHandled && l.status!=="New" && l.status!=="Monitor") return false;
-    if(activeFilter==="all") return true;
-    return l.trigger_type===activeFilter;
-  });
+function renderStats(){
+  const nonMon = RECENT.filter(l=>l.status!=="Monitor");
+  $('#c-all').textContent  = nonMon.length;
+  $('#c-3').textContent    = RECENT.filter(l=>l.score===3).length;
+  $('#c-2').textContent    = RECENT.filter(l=>l.score===2).length;
+  $('#c-done').textContent = RECENT.filter(l=>["Contacted","Not relevant","Hold"].includes(l.status)).length;
 }
 
+/* ---------- rendering ---------- */
 function render(){
-  const v = visible();
-  $('#c-all').textContent  = LEADS.filter(l=>l.status!=="Monitor").length;
-  $('#c-3').textContent    = LEADS.filter(l=>l.score===3).length;
-  $('#c-2').textContent    = LEADS.filter(l=>l.score===2).length;
-  $('#c-done').textContent = LEADS.filter(l=>l.status==="Contacted"||l.status==="Not relevant"||l.status==="Hold").length;
+  document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('on', t.dataset.tab===activeTab));
+  if(activeTab==="all"){ renderArchiveControls(); renderArchive(); }
+  else { renderWorklistControls(); renderWorklist(); $('#pager').innerHTML=""; }
+}
 
-  const list = $('#list'); list.innerHTML = "";
-  const groups = [
+function renderWorklistControls(){
+  const chips = ["all","layoff","fund","job","move","rfp"];
+  const label = {all:"All",layoff:"Layoffs",fund:"Funding",job:"IT hiring",move:"Moves",rfp:"RFPs"};
+  $('#controls').innerHTML =
+    chips.map(f=>`<button class="chip ${typeFilter===f?'on':''}" onclick="setType('${f}')">${label[f]}</button>`).join("")
+    + `<span class="spacer"></span>`
+    + `<label class="toggle"><input type="checkbox" ${hideHandled?'checked':''} onchange="setHide(this.checked)"> Hide handled</label>`;
+}
+
+function renderWorklist(){
+  let rows = (activeTab==="today") ? RECENT.filter(l=>l.run_date===daysAgo(0)) : RECENT.slice();
+  rows = rows.filter(l=>{
+    if(hideHandled && !["New","Monitor"].includes(l.status)) return false;
+    if(typeFilter!=="all") return l.trigger_type===typeFilter;
+    return true;
+  });
+  const groups=[
     {s:3,cls:"g3",label:"Act today",sub:"contact the same day"},
     {s:2,cls:"g2",label:"This week",sub:"batch for warm outreach"},
-    {s:1,cls:"g1",label:"Monitor",sub:"category signals, low priority"}
-  ];
-  let any=false;
+    {s:1,cls:"g1",label:"Monitor",sub:"category signals, low priority"}];
+  const list=$('#list'); list.innerHTML=""; let any=false;
   groups.forEach(g=>{
-    const rows = v.filter(l=>l.score===g.s)
-      .sort((a,b)=>(b.run_date||"").localeCompare(a.run_date||""));
-    if(!rows.length) return;
-    any=true;
-    const sec = document.createElement('div'); sec.className="group";
-    sec.innerHTML = `<div class="ghead ${g.cls}"><span class="dot"></span>
-      <h2>${g.label}</h2><span class="sub">— ${g.sub}</span>
-      <span class="gcount">${rows.length}</span></div>`;
-    rows.forEach(l=>sec.appendChild(cardEl(l)));
-    list.appendChild(sec);
+    const gr=rows.filter(l=>l.score===g.s).sort((a,b)=>(b.run_date||"").localeCompare(a.run_date||""));
+    if(!gr.length) return; any=true;
+    const sec=document.createElement('div'); sec.className="group";
+    sec.innerHTML=`<div class="ghead ${g.cls}"><span class="dot"></span><h2>${g.label}</h2><span class="sub">\u2014 ${g.sub}</span><span class="gcount">${gr.length}</span></div>`;
+    gr.forEach(l=>sec.appendChild(cardEl(l))); list.appendChild(sec);
   });
-  if(!any) list.innerHTML = '<div class="empty">Nothing matches this filter.</div>';
+  if(!any) list.innerHTML=`<div class="empty">${activeTab==="today"?"No leads dated today yet.":"Nothing matches this filter."}</div>`;
 }
 
+function renderArchiveControls(){
+  const chips=["all","layoff","fund","job","move","rfp"];
+  const label={all:"All",layoff:"Layoffs",fund:"Funding",job:"IT hiring",move:"Moves",rfp:"RFPs"};
+  $('#controls').innerHTML =
+    `<input class="search" id="q" placeholder="Search company or trigger\u2026" value="${esc(archive.search)}">`
+    + `<select class="sel-filter" id="stf">`
+      + `<option value="all">Any status</option>`
+      + STATUSES.map(s=>`<option value="${s}" ${archive.status===s?'selected':''}>${s}</option>`).join("")
+    + `</select>`
+    + `<div style="flex-basis:100%;height:0"></div>`
+    + chips.map(f=>`<button class="chip ${archive.type===f?'on':''}" onclick="setArchiveType('${f}')">${label[f]}</button>`).join("");
+  $('#q').addEventListener('input', debounce(()=>{ archive.search=$('#q').value.trim(); resetArchive(); },350));
+  $('#stf').addEventListener('change', ()=>{ archive.status=$('#stf').value; resetArchive(); });
+}
+
+async function renderArchive(){
+  if(archive.offset===0 && !archive.rows.length){ await loadArchive(); }
+  const list=$('#list'); list.innerHTML="";
+  $('#controls'); // controls already rendered
+  const countEl=document.createElement('div'); countEl.className="count";
+  countEl.textContent = `${archive.rows.length} lead${archive.rows.length===1?"":"s"} shown${archive.done?"":" \u2014 load more for older"}`;
+  list.appendChild(countEl);
+  if(!archive.rows.length){ list.innerHTML=`<div class="empty">No leads match.</div>`; $('#pager').innerHTML=""; return; }
+  archive.rows.forEach(l=>list.appendChild(cardEl(l)));
+  $('#pager').innerHTML = archive.done ? "" : `<button class="loadmore" onclick="loadArchive()">Load older leads</button>`;
+}
+
+async function loadArchive(){
+  let page=[];
+  if(live && client){
+    try{
+      let q=client.from('leads').select('*')
+        .order('run_date',{ascending:false}).order('created_at',{ascending:false});
+      if(archive.type!=="all")   q=q.eq('trigger_type',archive.type);
+      if(archive.status!=="all") q=q.eq('status',archive.status);
+      if(archive.search)         q=q.or(`company.ilike.*${archive.search}*,trigger_text.ilike.*${archive.search}*`);
+      q=q.range(archive.offset, archive.offset+PAGE-1);
+      const {data,error}=await q; if(error) throw error; page=data||[];
+    }catch(e){ page=[]; }
+  } else {
+    let rows=SAMPLE.slice().sort((a,b)=>(b.run_date||"").localeCompare(a.run_date||""));
+    if(archive.type!=="all")   rows=rows.filter(l=>l.trigger_type===archive.type);
+    if(archive.status!=="all") rows=rows.filter(l=>l.status===archive.status);
+    if(archive.search){ const t=archive.search.toLowerCase();
+      rows=rows.filter(l=>(l.company||"").toLowerCase().includes(t)||(l.trigger_text||"").toLowerCase().includes(t)); }
+    page=rows.slice(archive.offset, archive.offset+PAGE);
+  }
+  archive.rows=archive.rows.concat(page);
+  archive.offset+=page.length;
+  if(page.length<PAGE) archive.done=true;
+  renderArchive();
+}
+
+function resetArchive(){ archive.rows=[]; archive.offset=0; archive.done=false; renderArchive(); }
+
+/* ---------- card ---------- */
 function cardEl(l){
-  const c = document.createElement('div');
-  c.className = "card" + (["Contacted","Not relevant","Hold"].includes(l.status)?" handled":"");
-  const pill = {layoff:"p-layoff",fund:"p-fund",job:"p-job",move:"p-move",rfp:"p-rfp"}[l.trigger_type]||"p-move";
-  const plabel = {layoff:"Layoff",fund:"Funding",job:"IT hiring",move:"Office move",rfp:"RFP"}[l.trigger_type]||l.trigger_type;
-  const age = dayLabel(l.run_date);
-  const opener = l.opener ? `<div class="opener">${esc(l.opener)}</div>` : "";
-  const actions = l.opener ? `
+  const c=document.createElement('div');
+  const handled=["Contacted","Not relevant","Hold"].includes(l.status);
+  c.className="card"+(handled?" handled":"");
+  const pill={layoff:"p-layoff",fund:"p-fund",job:"p-job",move:"p-move",rfp:"p-rfp"}[l.trigger_type]||"p-move";
+  const plabel={layoff:"Layoff",fund:"Funding",job:"IT hiring",move:"Office move",rfp:"RFP"}[l.trigger_type]||l.trigger_type;
+  const age=dayLabel(l.run_date);
+  const stag = (handled)?`<span class="statustag st-${(l.status||'').replace(' ','')}">${esc(l.status)}</span>`:"";
+  const opener=l.opener?`<div class="opener">${esc(l.opener)}</div>`:"";
+  const actions=l.opener?`
     <div class="actions">
-      ${l.source_url?`<a class="verify" href="${esc(l.source_url)}" target="_blank" rel="noopener">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><path d="M15 3h6v6"/><path d="M10 14L21 3"/></svg>
-        Verify source</a>`:""}
-      <button class="btn btn-copy" onclick='copyOpener(${l.id})'>Copy opener</button>
-      <select class="sel" onchange='setStatus(${l.id}, this.value)'>
+      ${l.source_url?`<a class="verify" href="${esc(l.source_url)}" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><path d="M15 3h6v6"/><path d="M10 14L21 3"/></svg>Verify source</a>`:""}
+      <button class="btn btn-copy" onclick='copyOpener(${JSON.stringify(l.id)})'>Copy opener</button>
+      <select class="sel" onchange='setStatus(${JSON.stringify(l.id)}, this.value)'>
         ${STATUSES.map(s=>`<option ${l.status===s?"selected":""}>${s}</option>`).join("")}
       </select>
-    </div>` : `
-    <div class="actions">
-      ${l.source_url?`<a class="verify" href="${esc(l.source_url)}" target="_blank" rel="noopener">Watch source</a>`:""}
-    </div>`;
-  c.innerHTML = `
-    <div class="crow">
-      <div>
-        <div class="company">${esc(l.company)}</div>
-        <div class="trigger">${esc(l.trigger_text)}</div>
-      </div>
-      <div class="score s${l.score}">${l.score}</div>
-    </div>
+    </div>`:`<div class="actions">${l.source_url?`<a class="verify" href="${esc(l.source_url)}" target="_blank" rel="noopener">Watch source</a>`:""}</div>`;
+  c.innerHTML=`
+    <div class="crow"><div>
+      <div class="company">${esc(l.company)||"<span style='color:var(--muted)'>(company pending)</span>"}</div>
+      <div class="trigger">${esc(l.trigger_text)}</div>
+    </div><div class="score s${l.score}">${l.score}</div></div>
     <div class="meta">
       <span class="pill ${pill}">${plabel}</span>
       <span class="metatext">${esc(l.location||"")}</span>
-      ${l.contact_title&&l.contact_title!=="Monitor only"?`<span class="metatext">· reach the <b>${esc(l.contact_title)}</b></span>`:""}
-      ${age?`<span class="agetag">${age}</span>`:""}
+      ${l.contact_title&&l.contact_title!=="Monitor only"?`<span class="metatext">\u00b7 reach the <b>${esc(l.contact_title)}</b></span>`:""}
+      ${stag}${age?`<span class="agetag">${age}</span>`:""}
     </div>
-    ${opener}
-    ${actions}
-    ${l.rationale?`<button class="why" onclick='toggleWhy(this)'>Why score ${l.score}? ›</button>
-      <div class="rationale">${esc(l.rationale)}</div>`:""}
-  `;
+    ${opener}${actions}
+    ${l.rationale?`<button class="why" onclick='toggleWhy(this)'>Why score ${l.score}? \u203a</button><div class="rationale">${esc(l.rationale)}</div>`:""}`;
   return c;
 }
 
+/* ---------- actions ---------- */
 function copyOpener(id){
-  const l = LEADS.find(x=>x.id===id); if(!l||!l.opener) return;
-  navigator.clipboard.writeText(l.opener).then(()=>{
-    event.target.textContent="Copied";
-    setTimeout(()=>event.target.textContent="Copy opener",1600);
-  });
+  const l=find(id); if(!l||!l.opener) return;
+  navigator.clipboard.writeText(l.opener).then(()=>{ event.target.textContent="Copied"; setTimeout(()=>event.target.textContent="Copy opener",1600); });
 }
-async function setStatus(id, status){
-  const l = LEADS.find(x=>x.id===id); if(!l) return;
-  l.status = status;
-  if(live && client){
-    try{ await client.from('leads').update({status, updated_at:new Date().toISOString()}).eq('id', id); }
-    catch(e){ /* stays updated on screen even if the save fails */ }
-  }
-  render();
+async function setStatus(id,status){
+  [find(id, RECENT), find(id, archive.rows)].forEach(l=>{ if(l) l.status=status; });
+  if(live && client){ try{ await client.from('leads').update({status,updated_at:new Date().toISOString()}).eq('id',id);}catch(e){} }
+  renderStats(); render();
 }
 function toggleWhy(btn){ btn.nextElementSibling.classList.toggle('open'); }
+function find(id, pool){ return (pool||RECENT.concat(archive.rows)).find(x=>String(x.id)===String(id)); }
 
-document.querySelectorAll('.chip').forEach(ch=>ch.addEventListener('click',()=>{
-  document.querySelectorAll('.chip').forEach(c=>c.classList.remove('on'));
-  ch.classList.add('on'); activeFilter=ch.dataset.f; render();
-}));
-$('#hide-handled').addEventListener('change',e=>{ hideHandled=e.target.checked; render(); });
+function setType(f){ typeFilter=f; render(); }
+function setHide(v){ hideHandled=v; render(); }
+function setArchiveType(f){ archive.type=f; resetArchive(); renderArchiveControls(); }
+function debounce(fn,ms){ let t; return (...a)=>{ clearTimeout(t); t=setTimeout(()=>fn(...a),ms); }; }
 
+document.querySelectorAll('.tab').forEach(t=>t.addEventListener('click',()=>{ activeTab=t.dataset.tab; render(); }));
 boot();
 </script>
 </body>

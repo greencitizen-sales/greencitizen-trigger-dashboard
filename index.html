@@ -94,6 +94,22 @@
   .mbtn-ok{background:var(--gc);border-color:var(--gc);color:#fff}
   .mbtn-ok:hover{background:var(--gc-deep)}
 
+  /* login gate */
+  #gate{min-height:100vh;align-items:center;justify-content:center;padding:24px}
+  .gate-card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:32px 30px;width:100%;max-width:380px;box-shadow:0 10px 40px rgba(0,0,0,.06)}
+  .gate-brand{display:flex;align-items:center;gap:12px;margin-bottom:26px}
+  .gate-brand h1{font-size:16px;font-weight:600;letter-spacing:-.01em;margin:0}
+  .gate-brand p{font-size:12px;color:var(--muted);margin:2px 0 0}
+  .gate-l{display:block;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin:0 0 6px}
+  .gate-in{width:100%;box-sizing:border-box;font-size:14px;font-family:inherit;padding:11px 13px;border:1px solid var(--line);border-radius:10px;background:var(--paper);color:var(--ink);margin-bottom:16px}
+  .gate-in:focus{outline:none;border-color:var(--gc);background:var(--card)}
+  .gate-btn{width:100%;font-size:14px;font-weight:600;font-family:inherit;padding:12px;border-radius:10px;border:none;background:var(--gc);color:#fff;cursor:pointer;margin-top:4px}
+  .gate-btn:hover{background:var(--gc-deep)}
+  .gate-btn:disabled{opacity:.6;cursor:default}
+  .gate-err{font-size:12.5px;color:#B4231A;margin:12px 0 0;min-height:1em}
+  .signout{font-size:11.5px;font-weight:600;font-family:inherit;color:var(--muted);background:none;border:1px solid var(--line);border-radius:7px;padding:4px 10px;cursor:pointer;margin-top:6px}
+  .signout:hover{border-color:var(--muted);color:var(--ink)}
+
   .group{margin-top:26px}
   .ghead{display:flex;align-items:center;gap:10px;margin-bottom:11px}
   .ghead .dot{width:8px;height:8px;border-radius:50%}
@@ -149,14 +165,29 @@
 </style>
 </head>
 <body>
-<div class="wrap">
+<div id="gate" style="display:none">
+  <div class="gate-card">
+    <div class="gate-brand">
+      <div class="mark"><svg viewBox="0 0 16 16"><circle cx="8" cy="8" r="5" fill="none" stroke="#fff" stroke-width="2"/><circle cx="8" cy="8" r="2" fill="#fff"/></svg></div>
+      <div><h1>GreenCitizen AI Trigger System</h1><p>Internal team access</p></div>
+    </div>
+    <label class="gate-l" for="email">Email</label>
+    <input id="email" class="gate-in" type="email" autocomplete="username" placeholder="you@greencitizen.com">
+    <label class="gate-l" for="password">Password</label>
+    <input id="password" class="gate-in" type="password" autocomplete="current-password" placeholder="••••••••">
+    <button id="loginBtn" class="gate-btn">Sign in</button>
+    <p id="loginError" class="gate-err"></p>
+  </div>
+</div>
+
+<div class="wrap" id="app" style="display:none">
 
   <div class="top">
     <div class="brand">
       <div class="mark"><svg viewBox="0 0 16 16"><circle cx="8" cy="8" r="5" fill="none" stroke="#fff" stroke-width="2"/><circle cx="8" cy="8" r="2" fill="#fff"/></svg></div>
       <div><h1>GreenCitizen AI Trigger System</h1><p>San Francisco Bay Area recycling leads</p></div>
     </div>
-    <div class="runmeta">Last refreshed <b id="run">—</b><br><span class="mode" id="mode">demo data</span></div>
+    <div class="runmeta">Last refreshed <b id="run">—</b><br><span class="mode" id="mode">demo data</span> <button id="logoutBtn" class="signout" style="display:none">Sign out</button></div>
   </div>
 
   <div class="stats">
@@ -249,8 +280,9 @@ const SAMPLE = [
 
 /* ---------- state ---------- */
 let ALL = [];                  // every lead, loaded once; all views filter this
-let client = null;
 const live = !SUPABASE_URL.includes("PASTE") && !SUPABASE_KEY.includes("PASTE");
+const client = live ? supabase.createClient(SUPABASE_URL, SUPABASE_KEY) : null;  // one client, used for auth AND data
+let loaded = false;            // guards against reloading leads on token refresh
 let tab = "today";             // today | week | handled | all
 let typeFilter = "all";
 let search = "";
@@ -258,11 +290,19 @@ let allStatus = "all";         // status filter on the All tab
 let handledStatus = "all";     // sub-filter on the Handled tab
 let page = 1;
 
-/* ---------- boot / data ---------- */
-async function boot(){
+/* ---------- auth gate ---------- */
+function showApp(inApp){
+  document.getElementById('gate').style.display = inApp ? 'none' : 'flex';
+  document.getElementById('app').style.display  = inApp ? 'block' : 'none';
+  const lo=document.getElementById('logoutBtn');
+  if(lo) lo.style.display = (inApp && live) ? 'inline-flex' : 'none';
+}
+
+// Load leads into the dashboard (client already exists; only runs once authorized).
+async function loadData(){
+  if(loaded) return;
   if(live){
     try{
-      client = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
       ALL = await fetchAll();
       $('#mode').textContent="live"; $('#mode').classList.add("live");
     }catch(e){
@@ -271,11 +311,45 @@ async function boot(){
     }
   } else {
     ALL = SAMPLE.slice();
-    $('#config-banner').innerHTML='<div class="banner">Running on sample data. Paste your Project URL and publishable key into the top of this file and refresh to go live.</div>';
+    $('#config-banner').innerHTML='<div class="banner">Running on sample data (no login required). Paste your Project URL and publishable key at the top of this file to go live with team login.</div>';
   }
+  loaded = true;
   $('#run').textContent = new Date().toLocaleString('en-US',{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'});
   renderStats();
   render();
+}
+
+// Sign-in handler
+async function doLogin(){
+  const email=$('#email').value.trim(), password=$('#password').value;
+  const btn=$('#loginBtn'); const err=$('#loginError');
+  err.textContent="";
+  if(!email || !password){ err.textContent="Enter your email and password."; return; }
+  btn.disabled=true; btn.textContent="Signing in\u2026";
+  const { error } = await client.auth.signInWithPassword({ email, password });
+  btn.disabled=false; btn.textContent="Sign in";
+  if(error){ err.textContent = error.message || "Sign-in failed."; }
+  // on success, onAuthStateChange fires and swaps to the dashboard
+}
+
+function boot(){
+  if(live){
+    // Attach handlers
+    $('#loginBtn').onclick = doLogin;
+    $('#password').addEventListener('keydown', e=>{ if(e.key==='Enter') doLogin(); });
+    $('#email').addEventListener('keydown', e=>{ if(e.key==='Enter') $('#password').focus(); });
+    $('#logoutBtn').onclick = ()=> client.auth.signOut();
+    // React to auth state (fires an INITIAL_SESSION event on load, so this also sets the first screen)
+    client.auth.onAuthStateChange((event, session)=>{
+      if(event==='SIGNED_OUT'){ loaded=false; ALL=[]; showApp(false); return; }
+      if(session){ showApp(true); loadData(); }
+      else { showApp(false); }
+    });
+  } else {
+    // Demo mode: no keys, no login required \u2014 straight to sample data
+    showApp(true);
+    loadData();
+  }
 }
 
 // Load all leads in pages of 1000 (Supabase's per-request cap), newest entry first.

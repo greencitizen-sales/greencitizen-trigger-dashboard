@@ -86,6 +86,7 @@
   .metatext{font-size:12px;color:var(--muted)}
   .metatext b{color:var(--ink);font-weight:500}
   .agetag{font-size:11px;color:var(--muted);background:var(--line-soft);padding:2px 9px;border-radius:20px;margin-left:auto}
+  .disco{font-size:11px;color:var(--muted);font-style:italic}
   .statustag{font-size:10.5px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;padding:2px 8px;border-radius:20px}
   .st-Contacted{background:var(--s3-bg);color:var(--s3-tx)} .st-Hold{background:var(--s2-bg);color:var(--s2-tx)}
   .st-Notrelevant{background:var(--s1-bg);color:var(--s1-tx)}
@@ -119,7 +120,7 @@
   <div class="top">
     <div class="brand">
       <div class="mark"><svg viewBox="0 0 16 16"><circle cx="8" cy="8" r="5" fill="none" stroke="#fff" stroke-width="2"/><circle cx="8" cy="8" r="2" fill="#fff"/></svg></div>
-      <div><h1>GreenCitizen AI Trigger System</h1><p> San Francisco Bay Area recycling leads</p></div>
+      <div><h1>GreenCitizen AI Trigger System</h1><p>San Francisco Bay Area recycling leads</p></div>
     </div>
     <div class="runmeta">Last refreshed <b id="run">—</b><br><span class="mode" id="mode">demo data</span></div>
   </div>
@@ -149,8 +150,8 @@
 /* ============================================================
    PASTE YOUR TWO VALUES HERE (same ones as your current dashboard).
    ============================================================ */
-const SUPABASE_URL = "https://ydexaoiabbtjuuonzvjc.supabase.co";
-const SUPABASE_KEY = "sb_publishable_iEkHDF3Adt494FspnGAQ9g_15PQ9Kxr";
+const SUPABASE_URL = "PASTE_YOUR_PROJECT_URL_HERE";
+const SUPABASE_KEY = "PASTE_YOUR_PUBLISHABLE_KEY_HERE";
 
 const RECENT_DAYS = 7;
 const PAGE = 50;               // archive page size
@@ -166,6 +167,26 @@ function dayLabel(rd){
   const diff=Math.round((t-new Date(rd+"T00:00:00"))/86400000);
   if(diff<=0) return ""; if(diff===1) return "Yesterday"; return diff+" days ago";
 }
+// Entry date = when the lead landed in our system (created_at). Falls back to
+// run_date for older rows that predate the column.
+function entryDate(l){
+  const src = l.created_at || (l.run_date ? l.run_date+"T12:00:00Z" : null);
+  if(!src) return null;
+  const d = new Date(src);
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+function entryLabel(l){
+  const d = entryDate(l); if(!d) return "";
+  const lbl = dayLabel(d);
+  if(!lbl) return "Entered today";
+  return "Entered " + (lbl==="Yesterday" ? "yesterday" : lbl);
+}
+function announcedLabel(l){
+  if(!l.run_date) return "";
+  const dt = new Date(l.run_date+"T00:00:00");
+  return "announced " + dt.toLocaleDateString('en-US',{month:'short',day:'numeric'});
+}
+function entryCutoffISO(days){ const d=new Date(); d.setDate(d.getDate()-days); return d.toISOString(); }
 
 /* demo rows, dated relative to today so the tabs behave correctly */
 const SAMPLE = [
@@ -175,8 +196,8 @@ const SAMPLE = [
   {id:4,run_date:daysAgo(3),company:"Walmart (Sunnyvale tech site)",trigger_text:"67-person layoff at 1345 Crossman Ave, Sunnyvale",trigger_type:"layoff",score:2,location:"Sunnyvale",contact_title:"IT Asset Manager",source:"CA WARN, 2026-06-19",source_url:"https://edd.ca.gov/en/jobs_and_training/Layoff_Services_WARN/",opener:"Noticed the workforce changes at the Sunnyvale Crossman Ave site \u2014 if IT equipment is coming off desks, we offer free Bay Area pickup with documented data destruction.",rationale:"Verify office vs store; large firm likely has an ITAD contract \u2014 scored 2.",status:"New"},
   {id:5,run_date:daysAgo(1),company:"Bay Area tech sector (broad)",trigger_text:"Relocation activity trending up \u2014 category signal only",trigger_type:"move",score:1,location:"Bay Area-wide",contact_title:"Monitor only",source:"CRE report, 2026-06",source_url:"https://news.theregistrysf.com/",opener:null,rationale:"Not a specific company \u2014 watch for named movers.",status:"Monitor"},
   {id:6,run_date:daysAgo(12),company:"Redwood Biotherapeutics",trigger_text:"$40M raise; expanding Redwood City lab and office",trigger_type:"fund",score:2,location:"Redwood City",contact_title:"Facilities Manager",source:"SEC Form D",source_url:"https://www.sec.gov/cgi-bin/browse-edgar",opener:"Congrats on the raise \u2014 lab and office expansions usually retire a batch of older gear; we handle free, certified Bay Area pickup.",rationale:"Operating company raise, clear local site.",status:"Contacted"},
-  {id:7,run_date:daysAgo(25),company:"Peninsula Freight Co.",trigger_text:"31-person layoff, San Carlos",trigger_type:"layoff",score:2,location:"San Carlos",contact_title:"IT Manager",source:"News (via Google News)",source_url:"https://news.google.com/",opener:"Saw the San Carlos workforce reduction \u2014 smaller teams still leave equipment behind, and our pickup is free with certified data destruction.",rationale:"Sub-50 layoff, net-new (below WARN threshold).",status:"Hold"},
-  {id:8,run_date:daysAgo(40),company:"Marin Design Studio",trigger_text:"Signed new lease, relocating within San Rafael",trigger_type:"move",score:3,location:"San Rafael",contact_title:"Operations Manager",source:"The Registry",source_url:"https://news.theregistrysf.com/",opener:"Saw the San Rafael move \u2014 office relocations almost always come with equipment that needs to go somewhere responsibly; we pick up free.",rationale:"Confirmed office move in-area \u2014 high intent.",status:"Not relevant"},
+  {id:7,run_date:daysAgo(25),created_at:daysAgo(0)+"T09:15:00Z",company:"Peninsula Freight Co.",trigger_text:"31-person layoff, San Carlos",trigger_type:"layoff",score:2,location:"San Carlos",contact_title:"IT Manager",source:"News (via Google News)",source_url:"https://news.google.com/",opener:"Saw the San Carlos workforce reduction \u2014 smaller teams still leave equipment behind, and our pickup is free with certified data destruction.",rationale:"Sub-50 layoff, net-new (below WARN threshold).",status:"Hold"},
+  {id:8,run_date:daysAgo(40),created_at:daysAgo(2)+"T14:00:00Z",company:"Marin Design Studio",trigger_text:"Signed new lease, relocating within San Rafael",trigger_type:"move",score:3,location:"San Rafael",contact_title:"Operations Manager",source:"The Registry",source_url:"https://news.theregistrysf.com/",opener:"Saw the San Rafael move \u2014 office relocations almost always come with equipment that needs to go somewhere responsibly; we pick up free.",rationale:"Confirmed office move in-area \u2014 high intent.",status:"Not relevant"},
 ];
 
 let RECENT = [];               // last 7 days (drives Today + Week tabs)
@@ -194,17 +215,17 @@ async function boot(){
     try{
       client = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
       const { data, error } = await client.from('leads').select('*')
-        .gte('run_date', daysAgo(RECENT_DAYS))
-        .order('run_date',{ascending:false}).order('score',{ascending:false});
+        .gte('created_at', entryCutoffISO(RECENT_DAYS))
+        .order('created_at',{ascending:false});
       if(error) throw error;
       RECENT = data || [];
       $('#mode').textContent="live"; $('#mode').classList.add("live");
     }catch(e){
-      RECENT = SAMPLE.filter(l=>l.run_date >= daysAgo(RECENT_DAYS));
+      RECENT = SAMPLE.filter(l=>entryDate(l) >= daysAgo(RECENT_DAYS));
       $('#config-banner').innerHTML='<div class="banner">Couldn\u2019t reach your database \u2014 showing sample data. Check the URL and key at the top of the file.</div>';
     }
   } else {
-    RECENT = SAMPLE.filter(l=>l.run_date >= daysAgo(RECENT_DAYS));
+    RECENT = SAMPLE.filter(l=>entryDate(l) >= daysAgo(RECENT_DAYS));
     $('#config-banner').innerHTML='<div class="banner">Running on sample data. Paste your Project URL and publishable key into the top of this file and refresh to go live.</div>';
   }
   $('#run').textContent = new Date().toLocaleString('en-US',{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'});
@@ -237,7 +258,7 @@ function renderWorklistControls(){
 }
 
 function renderWorklist(){
-  let rows = (activeTab==="today") ? RECENT.filter(l=>l.run_date===daysAgo(0)) : RECENT.slice();
+  let rows = (activeTab==="today") ? RECENT.filter(l=>entryDate(l)===daysAgo(0)) : RECENT.slice();
   rows = rows.filter(l=>{
     if(hideHandled && !["New","Monitor"].includes(l.status)) return false;
     if(typeFilter!=="all") return l.trigger_type===typeFilter;
@@ -249,7 +270,7 @@ function renderWorklist(){
     {s:1,cls:"g1",label:"Monitor",sub:"category signals, low priority"}];
   const list=$('#list'); list.innerHTML=""; let any=false;
   groups.forEach(g=>{
-    const gr=rows.filter(l=>l.score===g.s).sort((a,b)=>(b.run_date||"").localeCompare(a.run_date||""));
+    const gr=rows.filter(l=>l.score===g.s).sort((a,b)=>(entryDate(b)||"").localeCompare(entryDate(a)||""));
     if(!gr.length) return; any=true;
     const sec=document.createElement('div'); sec.className="group";
     sec.innerHTML=`<div class="ghead ${g.cls}"><span class="dot"></span><h2>${g.label}</h2><span class="sub">\u2014 ${g.sub}</span><span class="gcount">${gr.length}</span></div>`;
@@ -290,7 +311,7 @@ async function loadArchive(){
   if(live && client){
     try{
       let q=client.from('leads').select('*')
-        .order('run_date',{ascending:false}).order('created_at',{ascending:false});
+        .order('created_at',{ascending:false});
       if(archive.type!=="all")   q=q.eq('trigger_type',archive.type);
       if(archive.status!=="all") q=q.eq('status',archive.status);
       if(archive.search)         q=q.or(`company.ilike.*${archive.search}*,trigger_text.ilike.*${archive.search}*`);
@@ -298,7 +319,7 @@ async function loadArchive(){
       const {data,error}=await q; if(error) throw error; page=data||[];
     }catch(e){ page=[]; }
   } else {
-    let rows=SAMPLE.slice().sort((a,b)=>(b.run_date||"").localeCompare(a.run_date||""));
+    let rows=SAMPLE.slice().sort((a,b)=>(entryDate(b)||"").localeCompare(entryDate(a)||""));
     if(archive.type!=="all")   rows=rows.filter(l=>l.trigger_type===archive.type);
     if(archive.status!=="all") rows=rows.filter(l=>l.status===archive.status);
     if(archive.search){ const t=archive.search.toLowerCase();
@@ -320,7 +341,8 @@ function cardEl(l){
   c.className="card"+(handled?" handled":"");
   const pill={layoff:"p-layoff",fund:"p-fund",job:"p-job",move:"p-move",rfp:"p-rfp"}[l.trigger_type]||"p-move";
   const plabel={layoff:"Layoff",fund:"Funding",job:"IT hiring",move:"Office move",rfp:"RFP"}[l.trigger_type]||l.trigger_type;
-  const age=dayLabel(l.run_date);
+  const entry=entryLabel(l);
+  const disco=announcedLabel(l);
   const stag = (handled)?`<span class="statustag st-${(l.status||'').replace(' ','')}">${esc(l.status)}</span>`:"";
   const opener=l.opener?`<div class="opener">${esc(l.opener)}</div>`:"";
   const actions=l.opener?`
@@ -340,7 +362,8 @@ function cardEl(l){
       <span class="pill ${pill}">${plabel}</span>
       <span class="metatext">${esc(l.location||"")}</span>
       ${l.contact_title&&l.contact_title!=="Monitor only"?`<span class="metatext">\u00b7 reach the <b>${esc(l.contact_title)}</b></span>`:""}
-      ${stag}${age?`<span class="agetag">${age}</span>`:""}
+      ${disco?`<span class="disco">\u00b7 ${disco}</span>`:""}
+      ${stag}${entry?`<span class="agetag">${entry}</span>`:""}
     </div>
     ${opener}${actions}
     ${l.rationale?`<button class="why" onclick='toggleWhy(this)'>Why score ${l.score}? \u203a</button><div class="rationale">${esc(l.rationale)}</div>`:""}`;

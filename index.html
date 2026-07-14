@@ -191,10 +191,10 @@
   </div>
 
   <div class="stats">
-    <div class="stat"><div class="n" id="c-all">0</div><div class="l">Leads · last 7 days</div></div>
-    <div class="stat"><div class="n g" id="c-3">0</div><div class="l">Act today</div></div>
-    <div class="stat"><div class="n a" id="c-2">0</div><div class="l">This week</div></div>
-    <div class="stat"><div class="n" id="c-done">0</div><div class="l">Handled (7d)</div></div>
+    <div class="stat"><div class="n" id="c-all">0</div><div class="l">Total triggers · last 7 days</div></div>
+    <div class="stat"><div class="n g" id="c-3">0</div><div class="l">High priority · last 7 days</div></div>
+    <div class="stat"><div class="n a" id="c-2">0</div><div class="l">Medium priority · last 7 days</div></div>
+    <div class="stat"><div class="n" id="c-done">0</div><div class="l">Handled · last 7 days</div></div>
   </div>
 
   <div id="config-banner"></div>
@@ -369,9 +369,9 @@ async function fetchAll(){
 
 function renderStats(){
   const recent = ALL.filter(l=>entryDate(l) >= daysAgo(RECENT_DAYS));
-  $('#c-all').textContent  = recent.filter(l=>l.status!=="Monitor").length;
-  $('#c-3').textContent    = recent.filter(l=>l.score===3).length;
-  $('#c-2').textContent    = recent.filter(l=>l.score===2).length;
+  $('#c-all').textContent  = recent.length;                                    // total triggers in last 7 days
+  $('#c-3').textContent    = recent.filter(l=>l.score===3).length;             // high priority
+  $('#c-2').textContent    = recent.filter(l=>l.score===2).length;             // medium priority
   $('#c-done').textContent = recent.filter(l=>HANDLED.includes(l.status)).length;
 }
 
@@ -457,9 +457,9 @@ function renderList(){
   if(!total){ list.innerHTML=`<div class="empty">${emptyMsg()}</div>`; $('#pager').innerHTML=""; return; }
 
   if(tab==="today" || tab==="week"){
-    const meta={3:{cls:"g3",label:"Act today",sub:"contact the same day"},
-                2:{cls:"g2",label:"This week",sub:"batch for warm outreach"},
-                1:{cls:"g1",label:"Monitor",sub:"category signals, low priority"}};
+    const meta={3:{cls:"g3",label:"High Priority",sub:""},
+                2:{cls:"g2",label:"Medium Priority",sub:""},
+                1:{cls:"g1",label:"Low Priority",sub:""}};
     const totalByScore={3:0,2:0,1:0};
     rows.forEach(l=>{ if(totalByScore[l.score]!=null) totalByScore[l.score]++; });
     let lastScore=null;
@@ -467,7 +467,7 @@ function renderList(){
       if(l.score!==lastScore){
         const g=meta[l.score]||{cls:"g1",label:"Other",sub:""};
         const h=document.createElement('div'); h.className="group";
-        h.innerHTML=`<div class="ghead ${g.cls}"><span class="dot"></span><h2>${g.label}</h2><span class="sub">\u2014 ${g.sub}</span><span class="gcount">${totalByScore[l.score]||0}</span></div>`;
+        h.innerHTML=`<div class="ghead ${g.cls}"><span class="dot"></span><h2>${g.label}</h2>${g.sub?`<span class="sub">\u2014 ${g.sub}</span>`:""}<span class="gcount">${totalByScore[l.score]||0}</span></div>`;
         list.appendChild(h);
         lastScore=l.score;
       }

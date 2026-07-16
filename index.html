@@ -152,6 +152,25 @@
 
   .opener{margin:13px 0 0;padding:12px 14px;background:var(--paper);border:1px solid var(--line-soft);
     border-radius:9px;font-size:13px;line-height:1.55;color:#39382F;font-style:italic}
+
+  /* matched CRM contacts */
+  .contacts{margin:13px 0 0;padding:11px 13px 8px;background:var(--s3-bg);border:1px solid #BFE7DA;border-radius:9px}
+  .contacts-hd{font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--gc-ink);
+    margin-bottom:7px;display:flex;align-items:center;gap:7px}
+  .ctag{font-size:9.5px;font-weight:700;letter-spacing:.03em;padding:2px 7px;border-radius:5px;text-transform:none}
+  .ctag-crm{background:var(--gc);color:#fff}
+  .ctag-maybe{background:var(--s2-bg);color:var(--s2-tx)}
+  .contact{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:6px 0;border-top:1px solid rgba(8,80,65,.10)}
+  .contact:first-of-type{border-top:none}
+  .c-name{font-size:13px;font-weight:600;color:var(--ink)}
+  .c-title{font-size:12px;color:#4A6B62}
+  .c-right{margin-left:auto;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+  .c-phone{font-size:11.5px;color:#4A6B62}
+  .c-email a{font-size:12px;color:var(--link);text-decoration:none}
+  .c-email a:hover{text-decoration:underline}
+  .c-copy{font-size:11px;font-weight:600;padding:4px 10px;border-radius:7px;border:1px solid var(--gc);
+    background:transparent;color:var(--gc-deep);cursor:pointer;font-family:inherit;transition:.12s}
+  .c-copy:hover{background:var(--gc);color:#fff}
   .actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:12px}
   .verify{font-size:12.5px;color:var(--link);text-decoration:none;font-weight:500;display:inline-flex;align-items:center;gap:4px}
   .verify:hover{text-decoration:underline}
@@ -196,7 +215,7 @@
       <div class="mark"><svg viewBox="0 0 16 16"><circle cx="8" cy="8" r="5" fill="none" stroke="#fff" stroke-width="2"/><circle cx="8" cy="8" r="2" fill="#fff"/></svg></div>
       <div><h1>GreenCitizen AI Trigger System</h1><p>San Francisco Bay Area recycling leads</p></div>
     </div>
-    <div class="runmeta">Last refreshed <b id="run">—</b> <span class="verbadge">v11</span><br><span class="mode" id="mode">demo data</span> <button id="logoutBtn" class="signout" style="display:none">Sign out</button></div>
+    <div class="runmeta">Last refreshed <b id="run">—</b> <span class="verbadge">v12</span><br><span class="mode" id="mode">demo data</span> <button id="logoutBtn" class="signout" style="display:none">Sign out</button></div>
   </div>
 
   <div class="stats">
@@ -277,12 +296,12 @@ function entryCutoffISO(days){ const d=new Date(); d.setDate(d.getDate()-days); 
 
 /* demo rows, dated relative to today so the tabs behave correctly */
 const SAMPLE = [
-  {id:1,run_date:daysAgo(0),company:"Keywords International Limited Group",trigger_text:"128-person permanent layoff in San Francisco, effective Aug 22 2026",trigger_type:"layoff",score:3,location:"San Francisco",contact_title:"IT Manager",source:"CA WARN, 2026-06-22",source_url:"https://edd.ca.gov/en/jobs_and_training/Layoff_Services_WARN/",opener:"Saw Keywords' San Francisco workforce reduction filing \u2014 a change that size usually leaves a wave of laptops and monitors behind, and we can take those off your team's hands with free pickup and certified data erasure.",rationale:"Downtown SF office, large in-area layoff \u2014 near-certain equipment volume; contact this week.",status:"New"},
+  {id:1,run_date:daysAgo(0),company:"Keywords International Limited Group",trigger_text:"128-person permanent layoff in San Francisco, effective Aug 22 2026",trigger_type:"layoff",score:3,location:"San Francisco",contact_title:"IT Manager",source:"CA WARN, 2026-06-22",source_url:"https://edd.ca.gov/en/jobs_and_training/Layoff_Services_WARN/",opener:"Saw Keywords' San Francisco workforce reduction filing \u2014 a change that size usually leaves a wave of laptops and monitors behind, and we can take those off your team's hands with free pickup and certified data erasure.",rationale:"Downtown SF office, large in-area layoff \u2014 near-certain equipment volume; contact this week.",status:"New",matched_contacts:[{name:"Dana Whitfield",title:"IT Director",email:"dana.whitfield@keywordsintl.com",phone:"",city:"San Francisco",company:"Keywords International",match:"exact",confidence:1.0},{name:"Louis Park",title:"Facilities Manager",email:"lpark@keywordsintl.com",phone:"(415) 555-0148",city:"San Francisco",company:"Keywords International",match:"exact",confidence:1.0}]},
   {id:2,run_date:daysAgo(1),company:"Northgate Logistics",trigger_text:"Series B raise reported, scaling Oakland operations team",trigger_type:"fund",score:2,location:"Oakland",contact_title:"Operations Manager",source:"SEC Form D, 2026-06-23",source_url:"https://www.sec.gov/cgi-bin/browse-edgar",opener:"Congrats on the new round \u2014 fast-scaling teams tend to cycle through equipment as they upgrade, and we handle responsible Bay Area pickup at no cost when older gear piles up.",rationale:"Funding signals a likely future need, not an immediate one \u2014 warm outreach.",status:"New"},
   {id:3,run_date:daysAgo(3),company:"Bayview Unified School District",trigger_text:"RFP posted for classroom device refresh and disposal",trigger_type:"rfp",score:2,location:"San Jose",contact_title:"Procurement Director",source:"Cal eProcure, 2026-06-23",source_url:"https://caleprocure.ca.gov/pages/public-search.aspx",opener:"Noticed the device-refresh RFP \u2014 public agencies have strict e-waste compliance requirements, and we're an R2-certified recycler that makes documented disposal simple.",rationale:"Public institutions must dispose compliantly; clear fit, near-term timing.",status:"New"},
-  {id:4,run_date:daysAgo(3),company:"Walmart (Sunnyvale tech site)",trigger_text:"67-person layoff at 1345 Crossman Ave, Sunnyvale",trigger_type:"layoff",score:2,location:"Sunnyvale",contact_title:"IT Asset Manager",source:"CA WARN, 2026-06-19",source_url:"https://edd.ca.gov/en/jobs_and_training/Layoff_Services_WARN/",opener:"Noticed the workforce changes at the Sunnyvale Crossman Ave site \u2014 if IT equipment is coming off desks, we offer free Bay Area pickup with documented data destruction.",rationale:"Verify office vs store; large firm likely has an ITAD contract \u2014 scored 2.",status:"New"},
+  {id:4,run_date:daysAgo(3),company:"Walmart (Sunnyvale tech site)",trigger_text:"67-person layoff at 1345 Crossman Ave, Sunnyvale",trigger_type:"layoff",score:2,location:"Sunnyvale",contact_title:"IT Asset Manager",source:"CA WARN, 2026-06-19",source_url:"https://edd.ca.gov/en/jobs_and_training/Layoff_Services_WARN/",opener:"Noticed the workforce changes at the Sunnyvale Crossman Ave site \u2014 if IT equipment is coming off desks, we offer free Bay Area pickup with documented data destruction.",rationale:"Verify office vs store; large firm likely has an ITAD contract \u2014 scored 2.",status:"New",matched_contacts:[{name:"Sam Ortega",title:"IT Asset Manager",email:"s.ortega@walmartglobaltech.com",phone:"",city:"Sunnyvale",company:"Walmart Global Tech",match:"fuzzy",confidence:0.88}]},
   {id:5,run_date:daysAgo(1),company:"Bay Area tech sector (broad)",trigger_text:"Relocation activity trending up \u2014 category signal only",trigger_type:"move",score:1,location:"Bay Area-wide",contact_title:"Monitor only",source:"CRE report, 2026-06",source_url:"https://news.theregistrysf.com/",opener:null,rationale:"Not a specific company \u2014 watch for named movers.",status:"Monitor"},
-  {id:6,run_date:daysAgo(12),company:"Redwood Biotherapeutics",trigger_text:"$40M raise; expanding Redwood City lab and office",trigger_type:"fund",score:2,location:"Redwood City",contact_title:"Facilities Manager",source:"SEC Form D",source_url:"https://www.sec.gov/cgi-bin/browse-edgar",opener:"Congrats on the raise \u2014 lab and office expansions usually retire a batch of older gear; we handle free, certified Bay Area pickup.",rationale:"Operating company raise, clear local site.",status:"Contacted",handled_by:"james.kao@greencitizen.com",handled_at:daysAgo(2)+"T15:42:00Z"},
+  {id:6,run_date:daysAgo(12),company:"Redwood Biotherapeutics",trigger_text:"$40M raise; expanding Redwood City lab and office",trigger_type:"fund",score:2,location:"Redwood City",contact_title:"Facilities Manager",source:"SEC Form D",source_url:"https://www.sec.gov/cgi-bin/browse-edgar",opener:"Congrats on the raise \u2014 lab and office expansions usually retire a batch of older gear; we handle free, certified Bay Area pickup.",rationale:"Operating company raise, clear local site.",status:"Contacted",handled_by:"james.kao@greencitizen.com",handled_at:daysAgo(2)+"T15:42:00Z",matched_contacts:[{name:"Priya Nair",title:"Head of Facilities",email:"priya.nair@redwoodbio.com",phone:"",city:"Redwood City",company:"Redwood Biotherapeutics",match:"exact",confidence:1.0}]},
   {id:7,run_date:daysAgo(25),created_at:daysAgo(0)+"T09:15:00Z",company:"Peninsula Freight Co.",trigger_text:"31-person layoff, San Carlos",trigger_type:"layoff",score:2,location:"San Carlos",contact_title:"IT Manager",source:"News (via Google News)",source_url:"https://news.google.com/",opener:"Saw the San Carlos workforce reduction \u2014 smaller teams still leave equipment behind, and our pickup is free with certified data destruction.",rationale:"Sub-50 layoff, net-new (below WARN threshold).",status:"Hold",handled_by:"angelina.guerrero@greencitizen.com",handled_at:daysAgo(1)+"T10:05:00Z"},
   {id:8,run_date:daysAgo(40),created_at:daysAgo(2)+"T14:00:00Z",company:"Marin Design Studio",trigger_text:"Signed new lease, relocating within San Rafael",trigger_type:"move",score:3,location:"San Rafael",contact_title:"Operations Manager",source:"The Registry",source_url:"https://news.theregistrysf.com/",opener:"Saw the San Rafael move \u2014 office relocations almost always come with equipment that needs to go somewhere responsibly; we pick up free.",rationale:"Confirmed office move in-area \u2014 high intent.",status:"Not relevant",handled_by:"marcus.mccrary@greencitizen.com",handled_at:daysAgo(0)+"T09:30:00Z"},
 ];
@@ -543,6 +562,25 @@ function auditLine(l){
   return `<span class="audit">${clock}<span>${byPart}${esc(stampTime(l.handled_at))}</span></span>`;
 }
 
+// Real people at the trigger company, matched from our CRM (best role first).
+function contactsBlock(l){
+  const cs = Array.isArray(l.matched_contacts) ? l.matched_contacts : [];
+  if(!cs.length) return "";
+  const fuzzy = cs[0] && cs[0].match === "fuzzy";
+  const tag = fuzzy
+    ? `<span class="ctag ctag-maybe">possible match</span>`
+    : `<span class="ctag ctag-crm">from CRM</span>`;
+  const label = cs.length>1 ? `${cs.length} contacts` : "Contact";
+  const rows = cs.map((c,i)=>{
+    const title = c.title ? `<span class="c-title">\u00b7 ${esc(c.title)}</span>` : "";
+    const phone = c.phone ? `<span class="c-phone">${esc(c.phone)}</span>` : "";
+    const email = c.email ? `<span class="c-email"><a href="mailto:${esc(c.email)}">${esc(c.email)}</a></span>` : "";
+    const cbtn = c.email ? `<button class="c-copy" onclick='copyContact(${JSON.stringify(l.id)}, ${i})'>Copy</button>` : "";
+    return `<div class="contact"><span class="c-name">${esc(c.name||"(no name)")}</span>${title}<span class="c-right">${phone}${email}${cbtn}</span></div>`;
+  }).join("");
+  return `<div class="contacts"><div class="contacts-hd">${label} ${tag}</div>${rows}</div>`;
+}
+
 function cardEl(l){
   const c=document.createElement('div');
   const isHandled = HANDLED.includes(l.status);
@@ -556,6 +594,7 @@ function cardEl(l){
     ? `<a class="verify" href="${esc(l.source_url)}" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><path d="M15 3h6v6"/><path d="M10 14L21 3"/></svg>${l.opener?"Verify source":"Watch source"}</a>` : "";
   const copy = l.opener ? `<button class="btn btn-copy" onclick='copyOpener(${JSON.stringify(l.id)})'>Copy opener</button>` : "";
   const opener=l.opener?`<div class="opener">${esc(l.opener)}</div>`:"";
+  const hasContacts = Array.isArray(l.matched_contacts) && l.matched_contacts.length>0;
   c.innerHTML=`
     <div class="crow"><div>
       <div class="company">${esc(l.company)||"<span style='color:var(--muted)'>(company pending)</span>"} ${stbadge}${auditLine(l)}</div>
@@ -564,10 +603,11 @@ function cardEl(l){
     <div class="meta">
       <span class="pill ${pill}">${plabel}</span>
       <span class="metatext">${esc(l.location||"")}</span>
-      ${l.contact_title&&l.contact_title!=="Monitor only"?`<span class="metatext">\u00b7 reach the <b>${esc(l.contact_title)}</b></span>`:""}
+      ${(!hasContacts && l.contact_title && l.contact_title!=="Monitor only")?`<span class="metatext">\u00b7 reach the <b>${esc(l.contact_title)}</b></span>`:""}
       ${disco?`<span class="disco">\u00b7 ${disco}</span>`:""}
       ${entry?`<span class="agetag">${entry}</span>`:""}
     </div>
+    ${contactsBlock(l)}
     ${opener}
     <div class="actions">${verify}${copy}${statusButtons(l)}</div>
     ${l.rationale?`<button class="why" onclick='toggleWhy(this)'>Why score ${l.score}? \u203a</button><div class="rationale">${esc(l.rationale)}</div>`:""}`;
@@ -580,6 +620,12 @@ function find(id){ return ALL.find(x=>String(x.id)===String(id)); }
 function copyOpener(id){
   const l=find(id); if(!l||!l.opener) return;
   navigator.clipboard.writeText(l.opener).then(()=>{ event.target.textContent="Copied"; setTimeout(()=>event.target.textContent="Copy opener",1600); });
+}
+
+function copyContact(id, idx){
+  const l=find(id); if(!l||!Array.isArray(l.matched_contacts)) return;
+  const c=l.matched_contacts[idx]; if(!c||!c.email) return;
+  navigator.clipboard.writeText(c.email).then(()=>{ event.target.textContent="Copied"; setTimeout(()=>event.target.textContent="Copy",1600); });
 }
 
 // Clicking a status button: confirm before moving an active lead into Handled.

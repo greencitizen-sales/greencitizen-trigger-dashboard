@@ -141,6 +141,15 @@
   .st-Monitor{background:#E6F1FB;color:#0C447C}
   .st-Notrelevant{background:var(--s1-bg);color:var(--s1-tx)}
 
+  /* audit trail stamp — sits inline in the header row, next to the status badge */
+  .audit{font-size:11.5px;font-weight:500;color:var(--s3-tx);display:inline-flex;align-items:center;gap:5px;
+    background:var(--s3-bg);border-radius:20px;padding:3px 10px;vertical-align:middle;margin-left:2px;white-space:nowrap}
+  .audit b{color:var(--gc-ink);font-weight:700}
+  .audit svg{width:11px;height:11px;color:var(--gc);flex-shrink:0}
+  /* version marker (helps confirm you've opened the newest file) */
+  .verbadge{display:inline-block;font-size:10px;font-weight:700;letter-spacing:.04em;
+    padding:2px 8px;border-radius:6px;background:var(--gc-ink);color:#fff;vertical-align:middle;margin-left:4px}
+
   .opener{margin:13px 0 0;padding:12px 14px;background:var(--paper);border:1px solid var(--line-soft);
     border-radius:9px;font-size:13px;line-height:1.55;color:#39382F;font-style:italic}
   .actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:12px}
@@ -187,7 +196,7 @@
       <div class="mark"><svg viewBox="0 0 16 16"><circle cx="8" cy="8" r="5" fill="none" stroke="#fff" stroke-width="2"/><circle cx="8" cy="8" r="2" fill="#fff"/></svg></div>
       <div><h1>GreenCitizen AI Trigger System</h1><p>San Francisco Bay Area recycling leads</p></div>
     </div>
-    <div class="runmeta">Last refreshed <b id="run">—</b><br><span class="mode" id="mode">demo data</span> <button id="logoutBtn" class="signout" style="display:none">Sign out</button></div>
+    <div class="runmeta">Last refreshed <b id="run">—</b> <span class="verbadge">v11</span><br><span class="mode" id="mode">demo data</span> <button id="logoutBtn" class="signout" style="display:none">Sign out</button></div>
   </div>
 
   <div class="stats">
@@ -273,9 +282,9 @@ const SAMPLE = [
   {id:3,run_date:daysAgo(3),company:"Bayview Unified School District",trigger_text:"RFP posted for classroom device refresh and disposal",trigger_type:"rfp",score:2,location:"San Jose",contact_title:"Procurement Director",source:"Cal eProcure, 2026-06-23",source_url:"https://caleprocure.ca.gov/pages/public-search.aspx",opener:"Noticed the device-refresh RFP \u2014 public agencies have strict e-waste compliance requirements, and we're an R2-certified recycler that makes documented disposal simple.",rationale:"Public institutions must dispose compliantly; clear fit, near-term timing.",status:"New"},
   {id:4,run_date:daysAgo(3),company:"Walmart (Sunnyvale tech site)",trigger_text:"67-person layoff at 1345 Crossman Ave, Sunnyvale",trigger_type:"layoff",score:2,location:"Sunnyvale",contact_title:"IT Asset Manager",source:"CA WARN, 2026-06-19",source_url:"https://edd.ca.gov/en/jobs_and_training/Layoff_Services_WARN/",opener:"Noticed the workforce changes at the Sunnyvale Crossman Ave site \u2014 if IT equipment is coming off desks, we offer free Bay Area pickup with documented data destruction.",rationale:"Verify office vs store; large firm likely has an ITAD contract \u2014 scored 2.",status:"New"},
   {id:5,run_date:daysAgo(1),company:"Bay Area tech sector (broad)",trigger_text:"Relocation activity trending up \u2014 category signal only",trigger_type:"move",score:1,location:"Bay Area-wide",contact_title:"Monitor only",source:"CRE report, 2026-06",source_url:"https://news.theregistrysf.com/",opener:null,rationale:"Not a specific company \u2014 watch for named movers.",status:"Monitor"},
-  {id:6,run_date:daysAgo(12),company:"Redwood Biotherapeutics",trigger_text:"$40M raise; expanding Redwood City lab and office",trigger_type:"fund",score:2,location:"Redwood City",contact_title:"Facilities Manager",source:"SEC Form D",source_url:"https://www.sec.gov/cgi-bin/browse-edgar",opener:"Congrats on the raise \u2014 lab and office expansions usually retire a batch of older gear; we handle free, certified Bay Area pickup.",rationale:"Operating company raise, clear local site.",status:"Contacted"},
-  {id:7,run_date:daysAgo(25),created_at:daysAgo(0)+"T09:15:00Z",company:"Peninsula Freight Co.",trigger_text:"31-person layoff, San Carlos",trigger_type:"layoff",score:2,location:"San Carlos",contact_title:"IT Manager",source:"News (via Google News)",source_url:"https://news.google.com/",opener:"Saw the San Carlos workforce reduction \u2014 smaller teams still leave equipment behind, and our pickup is free with certified data destruction.",rationale:"Sub-50 layoff, net-new (below WARN threshold).",status:"Hold"},
-  {id:8,run_date:daysAgo(40),created_at:daysAgo(2)+"T14:00:00Z",company:"Marin Design Studio",trigger_text:"Signed new lease, relocating within San Rafael",trigger_type:"move",score:3,location:"San Rafael",contact_title:"Operations Manager",source:"The Registry",source_url:"https://news.theregistrysf.com/",opener:"Saw the San Rafael move \u2014 office relocations almost always come with equipment that needs to go somewhere responsibly; we pick up free.",rationale:"Confirmed office move in-area \u2014 high intent.",status:"Not relevant"},
+  {id:6,run_date:daysAgo(12),company:"Redwood Biotherapeutics",trigger_text:"$40M raise; expanding Redwood City lab and office",trigger_type:"fund",score:2,location:"Redwood City",contact_title:"Facilities Manager",source:"SEC Form D",source_url:"https://www.sec.gov/cgi-bin/browse-edgar",opener:"Congrats on the raise \u2014 lab and office expansions usually retire a batch of older gear; we handle free, certified Bay Area pickup.",rationale:"Operating company raise, clear local site.",status:"Contacted",handled_by:"james.kao@greencitizen.com",handled_at:daysAgo(2)+"T15:42:00Z"},
+  {id:7,run_date:daysAgo(25),created_at:daysAgo(0)+"T09:15:00Z",company:"Peninsula Freight Co.",trigger_text:"31-person layoff, San Carlos",trigger_type:"layoff",score:2,location:"San Carlos",contact_title:"IT Manager",source:"News (via Google News)",source_url:"https://news.google.com/",opener:"Saw the San Carlos workforce reduction \u2014 smaller teams still leave equipment behind, and our pickup is free with certified data destruction.",rationale:"Sub-50 layoff, net-new (below WARN threshold).",status:"Hold",handled_by:"angelina.guerrero@greencitizen.com",handled_at:daysAgo(1)+"T10:05:00Z"},
+  {id:8,run_date:daysAgo(40),created_at:daysAgo(2)+"T14:00:00Z",company:"Marin Design Studio",trigger_text:"Signed new lease, relocating within San Rafael",trigger_type:"move",score:3,location:"San Rafael",contact_title:"Operations Manager",source:"The Registry",source_url:"https://news.theregistrysf.com/",opener:"Saw the San Rafael move \u2014 office relocations almost always come with equipment that needs to go somewhere responsibly; we pick up free.",rationale:"Confirmed office move in-area \u2014 high intent.",status:"Not relevant",handled_by:"marcus.mccrary@greencitizen.com",handled_at:daysAgo(0)+"T09:30:00Z"},
 ];
 
 /* ---------- state ---------- */
@@ -289,6 +298,30 @@ let search = "";
 let allStatus = "all";         // status filter on the All tab
 let handledStatus = "all";     // sub-filter on the Handled tab
 let page = 1;
+let currentUserEmail = null;   // who is signed in — stamped onto status changes
+
+// Map team logins to first names for the audit line. Anyone not listed
+// falls back to a name derived from their email, so new hires still show up.
+const TEAM_NAMES = {
+  "editor@greencitizen.com":"Samira",
+  "james.kao@greencitizen.com":"James",
+  "angelina.guerrero@greencitizen.com":"Angelina",
+  "shanell.chandra@greencitizen.com":"Shanell",
+  "marcus.mccrary@greencitizen.com":"Marcus",
+  "eric.schumacher@greencitizen.com":"Eric"
+};
+function personName(email){
+  if(!email) return "";
+  const key = String(email).trim().toLowerCase();
+  if(TEAM_NAMES[key]) return TEAM_NAMES[key];
+  const local = key.split("@")[0].split(/[._-]/)[0];   // e.g. sarah.lee@… -> "Sarah"
+  return local ? local.charAt(0).toUpperCase()+local.slice(1) : email;
+}
+function stampTime(iso){
+  // Pinned to San Francisco time (auto-handles PST/PDT) so the whole team sees
+  // the same clock reading regardless of where they're logged in from.
+  return new Date(iso).toLocaleString('en-US',{timeZone:'America/Los_Angeles',month:'short',day:'numeric',hour:'numeric',minute:'2-digit'}) + " PT";
+}
 
 /* ---------- auth gate ---------- */
 function showApp(inApp){
@@ -341,12 +374,14 @@ function boot(){
     $('#logoutBtn').onclick = ()=> client.auth.signOut();
     // React to auth state (fires an INITIAL_SESSION event on load, so this also sets the first screen)
     client.auth.onAuthStateChange((event, session)=>{
-      if(event==='SIGNED_OUT'){ loaded=false; ALL=[]; showApp(false); return; }
-      if(session){ showApp(true); loadData(); }
-      else { showApp(false); }
+      if(event==='SIGNED_OUT'){ loaded=false; ALL=[]; currentUserEmail=null; showApp(false); return; }
+      if(session){ currentUserEmail = session.user && session.user.email ? session.user.email : null; showApp(true); loadData(); }
+      else { currentUserEmail=null; showApp(false); }
     });
   } else {
-    // Demo mode: no keys, no login required \u2014 straight to sample data
+    // Demo mode: no keys, no login required \u2014 straight to sample data.
+    // Stand in as Samira so status changes you make while testing get stamped.
+    currentUserEmail = "editor@greencitizen.com";
     showApp(true);
     loadData();
   }
@@ -499,6 +534,15 @@ function statusButtons(l){
   }).join("") + `</div>`;
 }
 
+// "by James · Jul 16, 2:34 PM PT" — shown inline in the header row of handled cards.
+function auditLine(l){
+  if(!HANDLED.includes(l.status) || !l.handled_at) return "";
+  const who = personName(l.handled_by);
+  const byPart = who ? `by <b>${esc(who)}</b> \u00b7 ` : "";
+  const clock = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>`;
+  return `<span class="audit">${clock}<span>${byPart}${esc(stampTime(l.handled_at))}</span></span>`;
+}
+
 function cardEl(l){
   const c=document.createElement('div');
   const isHandled = HANDLED.includes(l.status);
@@ -514,7 +558,7 @@ function cardEl(l){
   const opener=l.opener?`<div class="opener">${esc(l.opener)}</div>`:"";
   c.innerHTML=`
     <div class="crow"><div>
-      <div class="company">${esc(l.company)||"<span style='color:var(--muted)'>(company pending)</span>"} ${stbadge}</div>
+      <div class="company">${esc(l.company)||"<span style='color:var(--muted)'>(company pending)</span>"} ${stbadge}${auditLine(l)}</div>
       <div class="trigger">${esc(l.trigger_text)}</div>
     </div><div class="score s${l.score}">${l.score}</div></div>
     <div class="meta">
@@ -553,8 +597,25 @@ function setStatus(id, clicked){
 
 async function applyStatus(id, next){
   const l=find(id); if(!l) return;
-  l.status=next;
-  if(live && client){ try{ await client.from('leads').update({status:next,updated_at:new Date().toISOString()}).eq('id',id);}catch(e){} }
+  const now = new Date().toISOString();
+  // Reverting to the worklist clears the handling record; any other change
+  // records who did it and when.
+  const reverting = (next === "New");
+  const by = reverting ? null : (currentUserEmail || null);
+  const at = reverting ? null : now;
+  l.status = next;
+  l.handled_by = by;
+  l.handled_at = at;
+  if(live && client){
+    try{
+      await client.from('leads').update({
+        status: next,
+        handled_by: by,
+        handled_at: at,
+        updated_at: now
+      }).eq('id', id);
+    }catch(e){}
+  }
   renderStats(); render();
 }
 

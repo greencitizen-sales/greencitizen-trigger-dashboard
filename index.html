@@ -69,12 +69,19 @@
   /* status action buttons on each card */
   .sbtns{display:flex;gap:6px;flex-wrap:wrap;margin-left:auto}
   .sbtn{font-size:12px;font-weight:600;padding:6px 11px;border-radius:8px;border:1px solid var(--line);
-    background:var(--card);color:var(--muted);cursor:pointer;font-family:inherit;transition:.12s}
-  .sbtn:hover{border-color:var(--muted);color:var(--ink)}
-  .sbtn.on-contacted{background:var(--s3-bg);border-color:var(--s3-bg);color:var(--s3-tx)}
-  .sbtn.on-hold{background:var(--s2-bg);border-color:var(--s2-bg);color:var(--s2-tx)}
-  .sbtn.on-notrelevant{background:var(--s1-bg);border-color:var(--s1-bg);color:var(--s1-tx)}
-  .sbtn.on-monitor{background:#E6F1FB;border-color:#E6F1FB;color:#0C447C}
+    cursor:pointer;font-family:inherit;transition:.12s}
+  /* rest: soft color tint so each status is recognizable at a glance */
+  .sbtn.sb-contacted{background:#E1F5EE;border-color:#9FE1CB;color:#085041}
+  .sbtn.sb-notrelevant{background:#FCEBEB;border-color:#F7C1C1;color:#791F1F}
+  .sbtn.sb-hold{background:#FAEEDA;border-color:#FAC775;color:#633806}
+  .sbtn.sb-monitor{background:#E6F1FB;border-color:#B5D4F4;color:#0C447C}
+  .sbtn:hover{filter:brightness(0.97)}
+  /* selected: full fill */
+  .sbtn.sb-contacted.on{background:#0F6E56;border-color:#0F6E56;color:#fff}
+  .sbtn.sb-notrelevant.on{background:#A32D2D;border-color:#A32D2D;color:#fff}
+  .sbtn.sb-hold.on{background:#BA7517;border-color:#BA7517;color:#fff}
+  .sbtn.sb-monitor.on{background:#185FA5;border-color:#185FA5;color:#fff}
+  .sbtn.on:hover{filter:brightness(1.05)}
 
   /* pagination */
   .pager{display:flex;align-items:center;justify-content:center;gap:16px;margin:22px 0 8px}
@@ -252,7 +259,7 @@
       <div class="mark"><svg viewBox="0 0 16 16"><circle cx="8" cy="8" r="5" fill="none" stroke="#fff" stroke-width="2"/><circle cx="8" cy="8" r="2" fill="#fff"/></svg></div>
       <div><h1>GreenCitizen AI Trigger System</h1><p>San Francisco Bay Area recycling leads</p></div>
     </div>
-    <div class="runmeta">Last refreshed <b id="run">—</b> <span class="verbadge">v15</span><br><span class="mode" id="mode">demo data</span> <button id="logoutBtn" class="signout" style="display:none">Sign out</button></div>
+    <div class="runmeta">Last refreshed <b id="run">—</b> <span class="verbadge">v16</span><br><span class="mode" id="mode">demo data</span> <button id="logoutBtn" class="signout" style="display:none">Sign out</button></div>
   </div>
 
   <div class="stats">
@@ -593,10 +600,10 @@ function renderPager(total, pages){
 
 /* ---------- card ---------- */
 function statusButtons(l){
-  const map=[["Contacted","on-contacted"],["Not relevant","on-notrelevant"],["Hold","on-hold"],["Monitor","on-monitor"]];
+  const map=[["Contacted","sb-contacted"],["Not relevant","sb-notrelevant"],["Hold","sb-hold"],["Monitor","sb-monitor"]];
   return `<div class="sbtns">` + map.map(([s,cls])=>{
     const on = l.status===s;
-    return `<button class="sbtn ${on?cls:''}" onclick='setStatus(${JSON.stringify(l.id)}, ${JSON.stringify(s)})'>${s}</button>`;
+    return `<button class="sbtn ${cls} ${on?'on':''}" onclick='setStatus(${JSON.stringify(l.id)}, ${JSON.stringify(s)})'>${s}</button>`;
   }).join("") + `</div>`;
 }
 
@@ -659,8 +666,8 @@ function cardEl(l){
   const stbadge = isHandled ? `<span class="statustag st-${(l.status||'').replace(/ /g,'')}">${esc(l.status)}</span>` : "";
   const verify = l.source_url
     ? `<a class="verify" href="${esc(l.source_url)}" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><path d="M15 3h6v6"/><path d="M10 14L21 3"/></svg>${l.opener?"Verify source":"Watch source"}</a>` : "";
-  const copy = l.opener ? `<button class="btn btn-copy" onclick='copyOpener(${JSON.stringify(l.id)})'>Copy opener</button>` : "";
-  const emailBtn = l.opener ? `<button class="btn btn-email" onclick='openEmailModal(${JSON.stringify(l.id)})'>Create full email</button>` : "";
+  const copy = l.opener ? `<button class="btn btn-email" onclick='copyOpener(${JSON.stringify(l.id)})'>Copy opener</button>` : "";
+  const emailBtn = l.opener ? `<button class="btn btn-copy" onclick='openEmailModal(${JSON.stringify(l.id)})'>Create full email</button>` : "";
   const opener=l.opener?`<div class="opener">${esc(l.opener)}</div>`:"";
   const hasContacts = Array.isArray(l.matched_contacts) && l.matched_contacts.length>0;
   c.innerHTML=`
@@ -677,7 +684,7 @@ function cardEl(l){
     </div>
     ${contactsBlock(l)}
     ${opener}
-    <div class="actions">${verify}${copy}${emailBtn}${statusButtons(l)}</div>
+    <div class="actions">${verify}${emailBtn}${copy}${statusButtons(l)}</div>
     <div class="emailbox" id="emailbox-${l.id}">${l.generated_email?emailPanel(l.id,l.generated_email):""}</div>
     ${l.rationale?`<button class="why" onclick='toggleWhy(this)'>Why score ${l.score}? \u203a</button><div class="rationale">${esc(l.rationale)}</div>`:""}`;
   return c;

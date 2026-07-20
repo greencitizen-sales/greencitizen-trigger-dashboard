@@ -241,7 +241,7 @@
       <div class="mark"><svg viewBox="0 0 16 16"><circle cx="8" cy="8" r="5" fill="none" stroke="#fff" stroke-width="2"/><circle cx="8" cy="8" r="2" fill="#fff"/></svg></div>
       <div><h1>GreenCitizen AI Trigger System</h1><p>San Francisco Bay Area recycling leads</p></div>
     </div>
-    <div class="runmeta">Last refreshed <b id="run">—</b> <span class="verbadge">v13</span><br><span class="mode" id="mode">demo data</span> <button id="logoutBtn" class="signout" style="display:none">Sign out</button></div>
+    <div class="runmeta">Last refreshed <b id="run">—</b> <span class="verbadge">v14</span><br><span class="mode" id="mode">demo data</span> <button id="logoutBtn" class="signout" style="display:none">Sign out</button></div>
   </div>
 
   <div class="stats">
@@ -705,25 +705,14 @@ function askConfirm(html, onOk, opts){
 function closeModal(){ $('#modal').style.display = "none"; $('#modal-ok').onclick = null; }
 
 /* ---------- full-email generation (on demand only) ---------- */
-// Step 1: confirm + pick who the email is for. Nothing is generated until "Generate email".
+// Simple confirm. No recipient is chosen here — the email uses a neutral greeting
+// and the rep addresses it themselves. Nothing is generated until "Generate email".
 function openEmailModal(id){
   const l=find(id); if(!l) return;
-  const cs = Array.isArray(l.matched_contacts) ? l.matched_contacts : [];
-  let opts = cs.map((c,i)=>
-    `<label class="ropt"><input type="radio" name="emailto" value="${i}" ${i===0?'checked':''}> `
-    + `<span><b>${esc(c.name||'(no name)')}</b>${c.title?` \u00b7 ${esc(c.title)}`:''}</span></label>`
-  ).join("");
-  opts += `<label class="ropt"><input type="radio" name="emailto" value="none" ${cs.length?'':'checked'}> `
-       + `<span>No specific person \u2014 I'll address it myself</span></label>`;
-  const body = `<div class="rlist">${opts}</div>`
-    + `<div class="rnote">This writes a full draft with AI (uses a small amount of your Claude budget). `
+  const body = `<div class="rnote">This writes a full draft with AI (uses a small amount of your Claude budget). `
     + `Nothing is generated until you confirm.</div>`;
-  askConfirm(body, ()=>{
-    const sel = document.querySelector('input[name="emailto"]:checked');
-    let recipient = null;
-    if(sel && sel.value !== "none") recipient = cs[parseInt(sel.value,10)] || null;
-    generateEmail(id, recipient);
-  }, { title:"Who's this email for?", okLabel:"Generate email" });
+  askConfirm(body, ()=>{ generateEmail(id, null); },
+             { title:"Create full email?", okLabel:"Generate email" });
 }
 
 function emailLoading(){

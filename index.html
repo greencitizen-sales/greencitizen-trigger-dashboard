@@ -177,6 +177,32 @@
   .verify svg{width:12px;height:12px}
   .btn{font-size:12.5px;font-weight:600;padding:7px 15px;border-radius:8px;border:none;cursor:pointer;font-family:inherit;transition:.12s}
   .btn-copy{background:var(--gc);color:#fff} .btn-copy:hover{background:var(--gc-deep)}
+  .btn-email{background:transparent;color:var(--gc-deep);border:1px solid var(--gc)} .btn-email:hover{background:var(--s3-bg)}
+
+  /* recipient picker inside the confirm modal */
+  .rlist{display:flex;flex-direction:column;gap:3px;margin-bottom:14px}
+  .ropt{display:flex;align-items:center;gap:9px;padding:9px 11px;border:1px solid var(--line-soft);border-radius:9px;
+    cursor:pointer;font-size:13px;color:var(--ink)}
+  .ropt:hover{border-color:var(--gc);background:var(--s3-bg)}
+  .ropt input{accent-color:var(--gc)}
+  .rnote{font-size:12px;color:var(--muted);line-height:1.5}
+
+  /* generated draft-email panel */
+  .email-draft{margin-top:12px;padding:13px 15px;background:var(--paper);border:1px solid var(--line-soft);border-radius:10px}
+  .email-hd{display:flex;align-items:center;gap:9px;font-size:11px;font-weight:700;text-transform:uppercase;
+    letter-spacing:.05em;color:var(--gc-ink);margin-bottom:9px}
+  .email-ai{font-weight:500;text-transform:none;letter-spacing:0;color:var(--muted);font-size:11px}
+  .email-copy{margin-left:auto;font-size:11px;font-weight:600;padding:4px 12px;border-radius:7px;border:1px solid var(--gc);
+    background:var(--gc);color:#fff;cursor:pointer;font-family:inherit}
+  .email-copy:hover{background:var(--gc-deep)}
+  .email-text{font-size:13px;line-height:1.6;color:#39382F;white-space:pre-wrap}
+  .email-draft.loading{display:flex;align-items:center;gap:10px;color:var(--muted);font-size:13px;font-style:italic}
+  .email-draft.err{font-size:13px;color:var(--ink)}
+  .email-retry{margin-left:6px;font-size:12px;font-weight:600;padding:3px 10px;border-radius:7px;border:1px solid var(--gc);
+    background:transparent;color:var(--gc-deep);cursor:pointer;font-family:inherit}
+  .spinner{width:14px;height:14px;border:2px solid var(--line);border-top-color:var(--gc);border-radius:50%;
+    display:inline-block;animation:spin .7s linear infinite}
+  @keyframes spin{to{transform:rotate(360deg)}}
   .sel{font-size:12.5px;border:1px solid var(--line);border-radius:8px;padding:6px 9px;background:var(--card);
     color:var(--ink);cursor:pointer;font-family:inherit;margin-left:auto}
   .why{font-size:12px;color:var(--muted);background:none;border:none;cursor:pointer;font-family:inherit;padding:4px 0;margin-top:9px;display:inline-flex;align-items:center;gap:5px}
@@ -215,7 +241,7 @@
       <div class="mark"><svg viewBox="0 0 16 16"><circle cx="8" cy="8" r="5" fill="none" stroke="#fff" stroke-width="2"/><circle cx="8" cy="8" r="2" fill="#fff"/></svg></div>
       <div><h1>GreenCitizen AI Trigger System</h1><p>San Francisco Bay Area recycling leads</p></div>
     </div>
-    <div class="runmeta">Last refreshed <b id="run">—</b> <span class="verbadge">v12</span><br><span class="mode" id="mode">demo data</span> <button id="logoutBtn" class="signout" style="display:none">Sign out</button></div>
+    <div class="runmeta">Last refreshed <b id="run">—</b> <span class="verbadge">v13</span><br><span class="mode" id="mode">demo data</span> <button id="logoutBtn" class="signout" style="display:none">Sign out</button></div>
   </div>
 
   <div class="stats">
@@ -242,7 +268,7 @@
 
 <div id="modal" class="modal-overlay" style="display:none">
   <div class="modal">
-    <div class="modal-title">Move to Handled?</div>
+    <div class="modal-title" id="modal-title">Move to Handled?</div>
     <div class="modal-body" id="modal-body"></div>
     <div class="modal-actions">
       <button class="mbtn mbtn-cancel" onclick="closeModal()">Cancel</button>
@@ -593,6 +619,7 @@ function cardEl(l){
   const verify = l.source_url
     ? `<a class="verify" href="${esc(l.source_url)}" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><path d="M15 3h6v6"/><path d="M10 14L21 3"/></svg>${l.opener?"Verify source":"Watch source"}</a>` : "";
   const copy = l.opener ? `<button class="btn btn-copy" onclick='copyOpener(${JSON.stringify(l.id)})'>Copy opener</button>` : "";
+  const emailBtn = l.opener ? `<button class="btn btn-email" onclick='openEmailModal(${JSON.stringify(l.id)})'>Create full email</button>` : "";
   const opener=l.opener?`<div class="opener">${esc(l.opener)}</div>`:"";
   const hasContacts = Array.isArray(l.matched_contacts) && l.matched_contacts.length>0;
   c.innerHTML=`
@@ -609,7 +636,8 @@ function cardEl(l){
     </div>
     ${contactsBlock(l)}
     ${opener}
-    <div class="actions">${verify}${copy}${statusButtons(l)}</div>
+    <div class="actions">${verify}${copy}${emailBtn}${statusButtons(l)}</div>
+    <div class="emailbox" id="emailbox-${l.id}">${l.generated_email?emailPanel(l.id,l.generated_email):""}</div>
     ${l.rationale?`<button class="why" onclick='toggleWhy(this)'>Why score ${l.score}? \u203a</button><div class="rationale">${esc(l.rationale)}</div>`:""}`;
   return c;
 }
@@ -666,13 +694,99 @@ async function applyStatus(id, next){
 }
 
 /* ---------- confirmation modal ---------- */
-function askConfirm(html, onOk){
+function askConfirm(html, onOk, opts){
+  opts = opts || {};
+  $('#modal-title').textContent = opts.title || "Move to Handled?";
+  $('#modal-ok').textContent = opts.okLabel || "Move to Handled";
   $('#modal-body').innerHTML = html;
-  const ok=$('#modal-ok');
-  ok.onclick = ()=>{ closeModal(); onOk(); };
+  $('#modal-ok').onclick = ()=>{ closeModal(); onOk(); };
   $('#modal').style.display = "flex";
 }
 function closeModal(){ $('#modal').style.display = "none"; $('#modal-ok').onclick = null; }
+
+/* ---------- full-email generation (on demand only) ---------- */
+// Step 1: confirm + pick who the email is for. Nothing is generated until "Generate email".
+function openEmailModal(id){
+  const l=find(id); if(!l) return;
+  const cs = Array.isArray(l.matched_contacts) ? l.matched_contacts : [];
+  let opts = cs.map((c,i)=>
+    `<label class="ropt"><input type="radio" name="emailto" value="${i}" ${i===0?'checked':''}> `
+    + `<span><b>${esc(c.name||'(no name)')}</b>${c.title?` \u00b7 ${esc(c.title)}`:''}</span></label>`
+  ).join("");
+  opts += `<label class="ropt"><input type="radio" name="emailto" value="none" ${cs.length?'':'checked'}> `
+       + `<span>No specific person \u2014 I'll address it myself</span></label>`;
+  const body = `<div class="rlist">${opts}</div>`
+    + `<div class="rnote">This writes a full draft with AI (uses a small amount of your Claude budget). `
+    + `Nothing is generated until you confirm.</div>`;
+  askConfirm(body, ()=>{
+    const sel = document.querySelector('input[name="emailto"]:checked');
+    let recipient = null;
+    if(sel && sel.value !== "none") recipient = cs[parseInt(sel.value,10)] || null;
+    generateEmail(id, recipient);
+  }, { title:"Who's this email for?", okLabel:"Generate email" });
+}
+
+function emailLoading(){
+  return `<div class="email-draft loading"><span class="spinner"></span> Writing the email\u2026</div>`;
+}
+function emailPanel(id, text){
+  return `<div class="email-draft">
+    <div class="email-hd">Draft email <span class="email-ai">AI-written \u00b7 review before sending</span>
+      <button class="email-copy" onclick='copyEmailDraft(${JSON.stringify(id)})'>Copy</button></div>
+    <div class="email-text">${esc(text)}</div>
+  </div>`;
+}
+function copyEmailDraft(id){
+  const l=find(id); if(!l||!l.generated_email) return;
+  navigator.clipboard.writeText(l.generated_email).then(()=>{ event.target.textContent="Copied"; setTimeout(()=>event.target.textContent="Copy",1600); });
+}
+
+// Step 2: call the secure Supabase function (which holds the Claude key server-side).
+async function generateEmail(id, recipient){
+  const l=find(id); if(!l) return;
+  const box=document.getElementById('emailbox-'+id);
+  if(box) box.innerHTML = emailLoading();
+  const payload = {
+    company: l.company, trigger_text: l.trigger_text, trigger_type: l.trigger_type,
+    opener: l.opener, location: l.location,
+    recipient_name: recipient ? (recipient.name || "") : "",
+    recipient_title: recipient ? (recipient.title || "") : "",
+  };
+  try{
+    let email;
+    if(live && client){
+      const { data, error } = await client.functions.invoke('generate-email', { body: payload });
+      if(error) throw error;
+      email = (data && data.email) ? data.email : "";
+      if(!email) throw new Error("empty response");
+    } else {
+      email = demoEmail(payload);   // demo mode: templated locally, no Claude call
+    }
+    l.generated_email = email;
+    if(box) box.innerHTML = emailPanel(id, email);
+  }catch(e){
+    if(box) box.innerHTML = `<div class="email-draft err">Couldn't generate the email just now. `
+      + `<button class="email-retry" onclick='openEmailModal(${JSON.stringify(id)})'>Try again</button></div>`;
+  }
+}
+
+// Demo-mode stand-in so the flow is visible without the live backend.
+function demoEmail(p){
+  const first = (p.recipient_name||"").trim().split(/\s+/)[0] || "there";
+  return `Subject: Free IT equipment pickup for ${p.company||"your team"}
+
+Hello ${first},
+
+${p.opener||"Reaching out about your recent update."}
+
+GreenCitizen offers free Bay Area business pickup with certified, DOD/NIST-standard data destruction and responsible recycling \u2014 laptops, monitors, servers, and anything that plugs in or runs on batteries.
+
+You can start a pickup here: https://greencitizen.com/services/business-recycling-pickup/ \u2014 or just reply and I'll coordinate everything for you.
+
+Best regards,
+
+[demo sample \u2014 the live version writes this with AI]`;
+}
 
 function toggleWhy(btn){ btn.nextElementSibling.classList.toggle('open'); }
 

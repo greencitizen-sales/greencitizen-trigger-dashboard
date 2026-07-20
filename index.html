@@ -46,6 +46,8 @@
   .tab:hover{color:var(--ink)}
   .tab.on{color:var(--gc-ink);border-bottom-color:var(--gc)}
   .tab-right{margin-left:auto}
+  .tabcount{font-size:11px;font-weight:600;color:var(--muted);background:var(--line-soft);padding:1px 7px;border-radius:20px;margin-left:5px;vertical-align:middle}
+  .tab.on .tabcount{background:var(--s3-bg);color:var(--gc-ink)}
 
   .controls{display:flex;align-items:center;column-gap:8px;row-gap:14px;flex-wrap:wrap;padding:16px 18px;margin:18px 0;border:1px solid var(--line);border-radius:12px;background:var(--card)}
   .flab{font-size:10.5px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-right:2px}
@@ -192,12 +194,21 @@
   .email-hd{display:flex;align-items:center;gap:9px;font-size:11px;font-weight:700;text-transform:uppercase;
     letter-spacing:.05em;color:var(--gc-ink);margin-bottom:9px}
   .email-ai{font-weight:500;text-transform:none;letter-spacing:0;color:var(--muted);font-size:11px}
-  .email-copy{margin-left:auto;font-size:11px;font-weight:600;padding:4px 12px;border-radius:7px;border:1px solid var(--gc);
+  .email-actions{margin-left:auto;display:flex;gap:8px;align-items:center;flex-shrink:0}
+  .email-copy{font-size:11px;font-weight:600;padding:4px 12px;border-radius:7px;border:1px solid var(--gc);
     background:var(--gc);color:#fff;cursor:pointer;font-family:inherit}
   .email-copy:hover{background:var(--gc-deep)}
+  .email-toggle{font-size:11px;font-weight:600;padding:4px 11px;border-radius:7px;border:1px solid var(--line);
+    background:transparent;color:var(--muted);cursor:pointer;font-family:inherit}
+  .email-toggle:hover{border-color:var(--gc);color:var(--gc-deep)}
+  .email-draft.collapsed .email-hd{margin-bottom:0}
   .email-text{font-size:13px;line-height:1.6;color:#39382F;white-space:pre-wrap}
   .email-draft.loading{display:flex;align-items:center;gap:10px;color:var(--muted);font-size:13px;font-style:italic}
   .email-draft.err{font-size:13px;color:var(--ink)}
+  /* contacts expand/collapse */
+  .contact-toggle{margin-top:8px;font-size:12px;font-weight:600;color:var(--gc-deep);background:none;border:none;
+    cursor:pointer;font-family:inherit;padding:2px 0}
+  .contact-toggle:hover{text-decoration:underline}
   .email-retry{margin-left:6px;font-size:12px;font-weight:600;padding:3px 10px;border-radius:7px;border:1px solid var(--gc);
     background:transparent;color:var(--gc-deep);cursor:pointer;font-family:inherit}
   .spinner{width:14px;height:14px;border:2px solid var(--line);border-top-color:var(--gc);border-radius:50%;
@@ -241,7 +252,7 @@
       <div class="mark"><svg viewBox="0 0 16 16"><circle cx="8" cy="8" r="5" fill="none" stroke="#fff" stroke-width="2"/><circle cx="8" cy="8" r="2" fill="#fff"/></svg></div>
       <div><h1>GreenCitizen AI Trigger System</h1><p>San Francisco Bay Area recycling leads</p></div>
     </div>
-    <div class="runmeta">Last refreshed <b id="run">—</b> <span class="verbadge">v14</span><br><span class="mode" id="mode">demo data</span> <button id="logoutBtn" class="signout" style="display:none">Sign out</button></div>
+    <div class="runmeta">Last refreshed <b id="run">—</b> <span class="verbadge">v15</span><br><span class="mode" id="mode">demo data</span> <button id="logoutBtn" class="signout" style="display:none">Sign out</button></div>
   </div>
 
   <div class="stats">
@@ -254,10 +265,10 @@
   <div id="config-banner"></div>
 
   <div class="tabs">
-    <button class="tab on" data-tab="today">Today's worklist</button>
-    <button class="tab" data-tab="week">Last 7 days</button>
-    <button class="tab" data-tab="all">All leads</button>
-    <button class="tab tab-right" data-tab="handled">Handled</button>
+    <button class="tab on" data-tab="today">Today's worklist <span class="tabcount" id="tc-today">0</span></button>
+    <button class="tab" data-tab="week">Last 7 days <span class="tabcount" id="tc-week">0</span></button>
+    <button class="tab" data-tab="all">All leads <span class="tabcount" id="tc-all">0</span></button>
+    <button class="tab tab-right" data-tab="handled">Handled <span class="tabcount" id="tc-handled">0</span></button>
   </div>
 
   <div id="controls"></div>
@@ -519,8 +530,18 @@ function emptyMsg(){
 }
 
 /* ---------- render ---------- */
+function updateTabCounts(){
+  const isNew=l=>l.status==="New";
+  const set=(id,n)=>{ const e=$('#'+id); if(e) e.textContent=n; };
+  set('tc-today',   ALL.filter(l=>entryDate(l)===daysAgo(0) && isNew(l)).length);
+  set('tc-week',    ALL.filter(l=>entryDate(l)>=daysAgo(RECENT_DAYS) && isNew(l)).length);
+  set('tc-all',     ALL.length);
+  set('tc-handled', ALL.filter(l=>HANDLED.includes(l.status)).length);
+}
+
 function render(){
   document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('on', t.dataset.tab===tab));
+  updateTabCounts();
   buildControls();
   renderList();
 }
@@ -589,6 +610,7 @@ function auditLine(l){
 }
 
 // Real people at the trigger company, matched from our CRM (best role first).
+// Shows the top 3; the rest collapse behind a "+N more contacts" toggle.
 function contactsBlock(l){
   const cs = Array.isArray(l.matched_contacts) ? l.matched_contacts : [];
   if(!cs.length) return "";
@@ -597,14 +619,33 @@ function contactsBlock(l){
     ? `<span class="ctag ctag-maybe">possible match</span>`
     : `<span class="ctag ctag-crm">from CRM</span>`;
   const label = cs.length>1 ? `${cs.length} contacts` : "Contact";
-  const rows = cs.map((c,i)=>{
+  const row = (c,i)=>{
     const title = c.title ? `<span class="c-title">\u00b7 ${esc(c.title)}</span>` : "";
     const phone = c.phone ? `<span class="c-phone">${esc(c.phone)}</span>` : "";
     const email = c.email ? `<span class="c-email"><a href="mailto:${esc(c.email)}">${esc(c.email)}</a></span>` : "";
     const cbtn = c.email ? `<button class="c-copy" onclick='copyContact(${JSON.stringify(l.id)}, ${i})'>Copy</button>` : "";
     return `<div class="contact"><span class="c-name">${esc(c.name||"(no name)")}</span>${title}<span class="c-right">${phone}${email}${cbtn}</span></div>`;
-  }).join("");
-  return `<div class="contacts"><div class="contacts-hd">${label} ${tag}</div>${rows}</div>`;
+  };
+  const CAP = 3;
+  const shown = cs.slice(0, CAP).map(row).join("");
+  let extra = "";
+  if(cs.length > CAP){
+    const n = cs.length - CAP;
+    const expanded = !!l._contactsExpanded;
+    const hidden = cs.slice(CAP).map(row).join("");
+    extra = `<div class="contact-more" id="cmore-${l.id}" style="${expanded?'':'display:none'}">${hidden}</div>`
+      + `<button class="contact-toggle" id="ctoggle-${l.id}" onclick='toggleContacts(${JSON.stringify(l.id)})'>`
+      + `${expanded ? "Show less" : `+${n} more contact${n===1?'':'s'}`}</button>`;
+  }
+  return `<div class="contacts"><div class="contacts-hd">${label} ${tag}</div>${shown}${extra}</div>`;
+}
+function toggleContacts(id){
+  const l=find(id); if(!l) return;
+  l._contactsExpanded = !l._contactsExpanded;
+  const more=document.getElementById('cmore-'+id);
+  const btn=document.getElementById('ctoggle-'+id);
+  if(more) more.style.display = l._contactsExpanded ? "" : "none";
+  if(btn){ const n=(l.matched_contacts||[]).length-3; btn.textContent = l._contactsExpanded ? "Show less" : `+${n} more contact${n===1?'':'s'}`; }
 }
 
 function cardEl(l){
@@ -719,11 +760,22 @@ function emailLoading(){
   return `<div class="email-draft loading"><span class="spinner"></span> Writing the email\u2026</div>`;
 }
 function emailPanel(id, text){
-  return `<div class="email-draft">
+  const l=find(id);
+  const collapsed = !!(l && l._emailCollapsed);
+  const copyBtn = collapsed ? "" : `<button class="email-copy" onclick='copyEmailDraft(${JSON.stringify(id)})'>Copy</button>`;
+  const toggle = `<button class="email-toggle" onclick='toggleEmail(${JSON.stringify(id)})'>${collapsed?"Show":"Hide"}</button>`;
+  const bodyHtml = collapsed ? "" : `<div class="email-text">${esc(text)}</div>`;
+  return `<div class="email-draft${collapsed?' collapsed':''}">
     <div class="email-hd">Draft email <span class="email-ai">AI-written \u00b7 review before sending</span>
-      <button class="email-copy" onclick='copyEmailDraft(${JSON.stringify(id)})'>Copy</button></div>
-    <div class="email-text">${esc(text)}</div>
+      <span class="email-actions">${copyBtn}${toggle}</span></div>
+    ${bodyHtml}
   </div>`;
+}
+function toggleEmail(id){
+  const l=find(id); if(!l||!l.generated_email) return;
+  l._emailCollapsed = !l._emailCollapsed;
+  const box=document.getElementById('emailbox-'+id);
+  if(box) box.innerHTML = emailPanel(id, l.generated_email);
 }
 function copyEmailDraft(id){
   const l=find(id); if(!l||!l.generated_email) return;

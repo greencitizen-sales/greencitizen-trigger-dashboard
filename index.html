@@ -140,7 +140,7 @@
   .meta{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:11px 0 0}
   .pill{font-size:11px;font-weight:600;padding:3px 9px;border-radius:8px}
   .p-layoff{background:#FCEBEB;color:#791F1F} .p-fund{background:#EEEDFE;color:#3C3489}
-  .p-job{background:#EAF3DE;color:#27500A} .p-move{background:#E6F1FB;color:#0C447C} .p-rfp{background:#FAEEDA;color:#633806}
+  .p-job{background:#EAF3DE;color:#27500A} .p-move{background:#E6F1FB;color:#0C447C} .p-institution{background:#FAEEDA;color:#633806}
   .metatext{font-size:12px;color:var(--muted)}
   .metatext b{color:var(--ink);font-weight:500}
   .agetag{font-size:11px;color:var(--muted);background:var(--line-soft);padding:2px 9px;border-radius:20px;margin-left:auto}
@@ -259,7 +259,7 @@
       <div class="mark"><svg viewBox="0 0 16 16"><circle cx="8" cy="8" r="5" fill="none" stroke="#fff" stroke-width="2"/><circle cx="8" cy="8" r="2" fill="#fff"/></svg></div>
       <div><h1>GreenCitizen AI Trigger System</h1><p>San Francisco Bay Area recycling leads</p></div>
     </div>
-    <div class="runmeta">Last refreshed <b id="run">—</b> <span class="verbadge">v16</span><br><span class="mode" id="mode">demo data</span> <button id="logoutBtn" class="signout" style="display:none">Sign out</button></div>
+    <div class="runmeta">Last refreshed <b id="run">—</b> <span class="verbadge">v17</span><br><span class="mode" id="mode">demo data</span> <button id="logoutBtn" class="signout" style="display:none">Sign out</button></div>
   </div>
 
   <div class="stats">
@@ -342,7 +342,7 @@ function entryCutoffISO(days){ const d=new Date(); d.setDate(d.getDate()-days); 
 const SAMPLE = [
   {id:1,run_date:daysAgo(0),company:"Keywords International Limited Group",trigger_text:"128-person permanent layoff in San Francisco, effective Aug 22 2026",trigger_type:"layoff",score:3,location:"San Francisco",contact_title:"IT Manager",source:"CA WARN, 2026-06-22",source_url:"https://edd.ca.gov/en/jobs_and_training/Layoff_Services_WARN/",opener:"Saw Keywords' San Francisco workforce reduction filing \u2014 a change that size usually leaves a wave of laptops and monitors behind, and we can take those off your team's hands with free pickup and certified data erasure.",rationale:"Downtown SF office, large in-area layoff \u2014 near-certain equipment volume; contact this week.",status:"New",matched_contacts:[{name:"Dana Whitfield",title:"IT Director",email:"dana.whitfield@keywordsintl.com",phone:"",city:"San Francisco",company:"Keywords International",match:"exact",confidence:1.0},{name:"Louis Park",title:"Facilities Manager",email:"lpark@keywordsintl.com",phone:"(415) 555-0148",city:"San Francisco",company:"Keywords International",match:"exact",confidence:1.0}]},
   {id:2,run_date:daysAgo(1),company:"Northgate Logistics",trigger_text:"Series B raise reported, scaling Oakland operations team",trigger_type:"fund",score:2,location:"Oakland",contact_title:"Operations Manager",source:"SEC Form D, 2026-06-23",source_url:"https://www.sec.gov/cgi-bin/browse-edgar",opener:"Congrats on the new round \u2014 fast-scaling teams tend to cycle through equipment as they upgrade, and we handle responsible Bay Area pickup at no cost when older gear piles up.",rationale:"Funding signals a likely future need, not an immediate one \u2014 warm outreach.",status:"New"},
-  {id:3,run_date:daysAgo(3),company:"Bayview Unified School District",trigger_text:"RFP posted for classroom device refresh and disposal",trigger_type:"rfp",score:2,location:"San Jose",contact_title:"Procurement Director",source:"Cal eProcure, 2026-06-23",source_url:"https://caleprocure.ca.gov/pages/public-search.aspx",opener:"Noticed the device-refresh RFP \u2014 public agencies have strict e-waste compliance requirements, and we're an R2-certified recycler that makes documented disposal simple.",rationale:"Public institutions must dispose compliantly; clear fit, near-term timing.",status:"New"},
+  {id:3,run_date:daysAgo(3),company:"Bayview Unified School District",trigger_text:"Surplus electronics posted for public auction",trigger_type:"institution",score:2,location:"San Jose",contact_title:"Procurement Director",source:"Public Surplus, 2026-06-23",source_url:"https://www.publicsurplus.com/sms/browse/home",opener:"Noticed you're clearing out surplus equipment \u2014 public agencies have strict e-waste compliance requirements, and we're an R2-certified recycler that makes documented disposal simple.",rationale:"Public institutions must dispose compliantly; clear fit, near-term timing.",status:"New"},
   {id:4,run_date:daysAgo(3),company:"Walmart (Sunnyvale tech site)",trigger_text:"67-person layoff at 1345 Crossman Ave, Sunnyvale",trigger_type:"layoff",score:2,location:"Sunnyvale",contact_title:"IT Asset Manager",source:"CA WARN, 2026-06-19",source_url:"https://edd.ca.gov/en/jobs_and_training/Layoff_Services_WARN/",opener:"Noticed the workforce changes at the Sunnyvale Crossman Ave site \u2014 if IT equipment is coming off desks, we offer free Bay Area pickup with documented data destruction.",rationale:"Verify office vs store; large firm likely has an ITAD contract \u2014 scored 2.",status:"New",matched_contacts:[{name:"Sam Ortega",title:"IT Asset Manager",email:"s.ortega@walmartglobaltech.com",phone:"",city:"Sunnyvale",company:"Walmart Global Tech",match:"fuzzy",confidence:0.88}]},
   {id:5,run_date:daysAgo(1),company:"Bay Area tech sector (broad)",trigger_text:"Relocation activity trending up \u2014 category signal only",trigger_type:"move",score:1,location:"Bay Area-wide",contact_title:"Monitor only",source:"CRE report, 2026-06",source_url:"https://news.theregistrysf.com/",opener:null,rationale:"Not a specific company \u2014 watch for named movers.",status:"Monitor"},
   {id:6,run_date:daysAgo(12),company:"Redwood Biotherapeutics",trigger_text:"$40M raise; expanding Redwood City lab and office",trigger_type:"fund",score:2,location:"Redwood City",contact_title:"Facilities Manager",source:"SEC Form D",source_url:"https://www.sec.gov/cgi-bin/browse-edgar",opener:"Congrats on the raise \u2014 lab and office expansions usually retire a batch of older gear; we handle free, certified Bay Area pickup.",rationale:"Operating company raise, clear local site.",status:"Contacted",handled_by:"james.kao@greencitizen.com",handled_at:daysAgo(2)+"T15:42:00Z",matched_contacts:[{name:"Priya Nair",title:"Head of Facilities",email:"priya.nair@redwoodbio.com",phone:"",city:"Redwood City",company:"Redwood Biotherapeutics",match:"exact",confidence:1.0}]},
@@ -475,8 +475,8 @@ function renderStats(){
 
 /* ---------- controls ---------- */
 function typeChips(active){
-  const chips=["all","layoff","fund","job","move","rfp"];
-  const label={all:"All",layoff:"Layoffs",fund:"Funding",job:"IT hiring",move:"Moves",rfp:"RFPs"};
+  const chips=["all","layoff","fund","job","move","institution"];
+  const label={all:"All",layoff:"Layoffs",fund:"Funding",job:"IT hiring",move:"Moves",institution:"Institutions"};
   return chips.map(f=>`<button class="chip ${active===f?'on':''}" onclick="setType('${f}')">${label[f]}</button>`).join("");
 }
 
@@ -659,8 +659,8 @@ function cardEl(l){
   const c=document.createElement('div');
   const isHandled = HANDLED.includes(l.status);
   c.className = "card" + (isHandled ? " is-handled" : "");
-  const pill={layoff:"p-layoff",fund:"p-fund",job:"p-job",move:"p-move",rfp:"p-rfp"}[l.trigger_type]||"p-move";
-  const plabel={layoff:"Layoff",fund:"Funding",job:"IT hiring",move:"Office move",rfp:"RFP"}[l.trigger_type]||l.trigger_type;
+  const pill={layoff:"p-layoff",fund:"p-fund",job:"p-job",move:"p-move",institution:"p-institution"}[l.trigger_type]||"p-move";
+  const plabel={layoff:"Layoff",fund:"Funding",job:"IT hiring",move:"Office move",institution:"Institution"}[l.trigger_type]||l.trigger_type;
   const entry=entryLabel(l);
   const disco=announcedLabel(l);
   const stbadge = isHandled ? `<span class="statustag st-${(l.status||'').replace(/ /g,'')}">${esc(l.status)}</span>` : "";
